@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Pegangan Guru - SiJAB</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; line-height: 1.7; color: #333; max-width: 850px; margin: 40px auto; padding: 30px; }
+.cover { text-align: center; padding: 60px 20px; background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; border-radius: 15px; margin-bottom: 40px; }
+.cover h1 { font-size: 36px; margin-bottom: 10px; }
+.cover p { font-size: 16px; opacity: 0.9; }
+h2 { color: #1e3c72; border-bottom: 3px solid #2a5298; padding-bottom: 8px; margin-top: 35px; }
+h3 { color: #2a5298; margin-top: 20px; }
+.box { background: #f4f7f6; border-left: 5px solid #2a5298; padding: 15px 20px; margin: 20px 0; border-radius: 6px; }
+.warning { background: #fff3cd; border-left: 5px solid #ffc107; }
+.success { background: #d4edda; border-left: 5px solid #28a745; }
+table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+th { background: #1e3c72; color: white; }
+.btn-print { padding: 12px 25px; background: #2a5298; color: white; border: none; cursor: pointer; border-radius: 6px; font-size: 14px; font-weight: 600; }
+@media print {
+    .no-print { display: none; }
+    body { margin: 0; padding: 20px; font-size: 11pt; }
+    .cover { page-break-after: always; }
+    h2 { page-break-after: avoid; }
+}
+</style>
+</head>
+<body>
+<button class="no-print btn-print" onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
+
+<div class="cover">
+    <h1>📘 PEGANGAN GURU</h1>
+    <p>Sistem Informasi Jadwal Pembelajaran Anti-Bentrok (SiJAB)</p>
+    <p style="margin-top:20px;">Edisi 2026</p>
+</div>
+
+<h2>📌 Pendahuluan</h2>
+<div class="box">
+    <strong>Selamat datang, Bapak/Ibu Guru!</strong><br>
+    Buku panduan ini membantu Anda memanfaatkan sistem SiJAB untuk mengelola jadwal mengajar secara efektif, menghindari bentrok, dan memantau aktivitas pembelajaran.
+</div>
+
+<h2>🔐 1. Login & Akses</h2>
+<ol>
+    <li>Buka aplikasi SiJAB melalui browser (Chrome/Edge/Firefox).</li>
+    <li>Masukkan <strong>NIP</strong> atau <strong>Email Sekolah</strong> Anda.</li>
+    <li>Anda akan diarahkan ke <strong>Dashboard Pribadi</strong> yang menampilkan rekap jam mengajar minggu ini.</li>
+</ol>
+
+<h2>📅 2. Melihat Jadwal Mengajar</h2>
+<h3>2.1 Tampilan Harian</h3>
+<p>Menampilkan jadwal Anda untuk satu hari tertentu, lengkap dengan:</p>
+<ul>
+    <li>Nama kelas yang diampu</li>
+    <li>Mata pelajaran & durasi</li>
+    <li>Ruangan/lokasi mengajar</li>
+</ul>
+
+<h3>2.2 Tampilan Mingguan (Matriks)</h3>
+<p>Tampilan grid Hari × Jam untuk melihat pola mengajar Anda secara keseluruhan.</p>
+
+<h2>⚙️ 3. Mengatur Ketersediaan Waktu</h2>
+<div class="box success">
+    <strong>Tips:</strong> Atur waktu tidak tersedia agar sistem tidak menjadwalkan Anda pada jam tersebut.
+</div>
+<ol>
+    <li>Buka menu <strong>Profil → Ketersediaan</strong>.</li>
+    <li>Blokir waktu yang <strong>TIDAK BISA</strong> mengajar (istirahat, urusan pribadi, rapat).</li>
+    <li>Klik <strong>Simpan Preferensi</strong>.</li>
+</ol>
+
+<h2>🚨 4. Prosedur Jika Terjadi Bentrok</h2>
+<div class="box warning">
+    <strong>Perhatian:</strong> Sistem SiJAB menggunakan validasi 3 lapis (Guru, Kelas, Ruangan) untuk mencegah bentrok. Jika Anda menemukan anomali:
+</div>
+<ol>
+    <li>Klik tombol <strong>Lapor Bentrok</strong> pada jadwal yang bermasalah.</li>
+    <li>Sistem otomatis memberi notifikasi ke Koordinator Jadwal.</li>
+    <li>Anda akan menerima usulan <em>Reschedule</em> dalam 1×24 jam.</li>
+    <li>Konfirmasi jadwal baru melalui notifikasi email/aplikasi.</li>
+</ol>
+
+<h2>🔄 5. Permintaan Perubahan Jadwal</h2>
+<table>
+    <tr><th>Jenis Perubahan</th><th>Batas Waktu</th><th>Persetujuan</th></tr>
+    <tr><td>Pertukaran Jam</td><td>H-2</td><td>Koordinator</td></tr>
+    <tr><td>Perpindahan Ruangan</td><td>H-1</td><td>Otomatis</td></tr>
+    <tr><td>Perwalian (Guru Berhalangan)</td><td>Mendadak</td><td>Koordinator + Guru Pengganti</td></tr>
+</table>
+
+<h2>📊 6. Statistik & Laporan</h2>
+<p>Dashboard Anda menampilkan:</p>
+<ul>
+    <li>Total jam mengajar per minggu</li>
+    <li>Distribusi mapel yang diampu</li>
+    <li>Riwayat kehadiran & perwalian</li>
+    <li>Export laporan bulanan (PDF/Excel)</li>
+</ul>
+
+<h2>📞 7. Kontak Dukungan</h2>
+<div class="box">
+    <strong>Tim IT Sekolah</strong><br>
+    📧 Email: it@sekolah.sch.id<br>
+    📱 WhatsApp: 0812-xxxx-xxxx<br>
+    🕐 Jam Operasional: Senin-Jumat, 07.00-15.00
+</div>
+
+<div style="text-align:center; margin-top:50px; padding:20px; background:#f0f2f5; border-radius:10px;">
+    <p><em>Dokumen ini dicetak otomatis oleh sistem SiJAB.</em></p>
+    <p><strong>Selamat Mengajar!</strong> 🎓</p>
+</div>
+</body>
+</html>
