@@ -44,6 +44,23 @@ body { background: #f0f2f5; color: #333; }
 .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; transition: 0.3s; }
 .form-group input:focus, .form-group select:focus { outline: none; border-color: #2a5298; box-shadow: 0 0 0 3px rgba(42,82,152,0.1); }
 
+/* MULTI-SELECT STYLE KHUSUS */
+.form-group select[multiple] { 
+    height: auto; 
+    min-height: 110px; 
+    padding: 5px;
+}
+.form-group select[multiple] option {
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 2px;
+    cursor: pointer;
+}
+.form-group select[multiple] option:checked {
+    background: #2a5298 linear-gradient(0deg, #2a5298 0%, #2a5298 100%);
+    color: white;
+}
+
 /* BUTTONS */
 .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; transition: 0.3s; margin-right: 5px; }
 .btn-primary { background: #2a5298; color: white; }
@@ -60,7 +77,7 @@ table { width: 100%; border-collapse: collapse; }
 table th { background: #1e3c72; color: white; padding: 12px; text-align: left; font-size: 13px; }
 table td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
 table tr:hover { background: #f9f9f9; }
-.badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; display: inline-block; margin: 2px; }
 .badge-success { background: #d4edda; color: #155724; }
 .badge-danger { background: #f8d7da; color: #721c24; }
 .badge-info { background: #d1ecf1; color: #0c5460; }
@@ -161,13 +178,16 @@ table tr:hover { background: #f9f9f9; }
                     <div class="form-grid">
                         <div class="form-group"><label>NIP</label><input type="text" id="guruNip" placeholder="NIP Guru"></div>
                         <div class="form-group"><label>Nama Guru</label><input type="text" id="guruNama" placeholder="Nama Lengkap"></div>
-                        <div class="form-group"><label>Mata Pelajaran</label>
-                            <select id="guruMapel"><option value="">-- Pilih Mapel --</option></select>
+                        <div class="form-group">
+                            <label>Mata Pelajaran <small style="color:#f44336;">*(Tahan Ctrl / Cmd untuk pilih >1)*</small></label>
+                            <select id="guruMapel" multiple size="4">
+                                <!-- Opsi akan diisi otomatis oleh JavaScript -->
+                            </select>
                         </div>
                     </div>
                     <button class="btn btn-success" onclick="tambahGuru()">+ Tambah Guru</button>
                     <h3 style="margin-top:25px;">Daftar Guru</h3>
-                    <table><thead><tr><th>NIP</th><th>Nama</th><th>Mapel</th><th>Aksi</th></tr></thead><tbody id="tblGuru"></tbody></table>
+                    <table><thead><tr><th>NIP</th><th>Nama</th><th>Bidang Studi</th><th>Aksi</th></tr></thead><tbody id="tblGuru"></tbody></table>
                 </div>
 
                 <!-- TAB KELAS -->
@@ -383,27 +403,46 @@ function renderMapel() {
 
 function hapusMapel(i) { if(confirm('Hapus mapel ini?')){data.mapel.splice(i,1); save(); renderMapel(); refreshDropdowns();} }
 
-// ========== MASTER: GURU ==========
+// ========== MASTER: GURU (DIPERBARUI UNTUK MULTI-MAPEL) ==========
 function tambahGuru() {
     const nip = document.getElementById('guruNip').value.trim();
     const nama = document.getElementById('guruNama').value.trim();
-    const mapel = document.getElementById('guruMapel').value;
-    if (!nip || !nama || !mapel) return alert('Lengkapi data guru!');
+    const mapelSelect = document.getElementById('guruMapel');
+    
+    // Ambil semua pilihan yang di-block user menjadi Array
+    const mapel = Array.from(mapelSelect.selectedOptions).map(option => option.value);
+    
+    if (!nip || !nama) return alert('Lengkapi NIP dan Nama Guru!');
+    if (mapel.length === 0) return alert('⚠️ Pilih minimal 1 Mata Pelajaran untuk guru ini!\n(Tahan tombol Ctrl atau Cmd di keyboard saat mengklik pilihan)');
     if (data.guru.find(g => g.nip === nip)) return alert('NIP sudah terdaftar!');
+    
+    // Simpan mapel sebagai Array
     data.guru.push({nip, nama, mapel});
-    save(); renderGuru(); refreshDropdowns();
+    save(); 
+    renderGuru(); 
+    refreshDropdowns();
+    
     document.getElementById('guruNip').value = '';
     document.getElementById('guruNama').value = '';
+    mapelSelect.selectedIndex = -1; // Reset pilihan
 }
 
 function renderGuru() {
     const tbody = document.getElementById('tblGuru');
     tbody.innerHTML = data.guru.map((g,i) => {
-        const m = data.mapel.find(x => x.kode === g.mapel);
+        // Handle data lama (masih string) atau data baru (sudah array)
+        const mapelList = Array.isArray(g.mapel) ? g.mapel : [g.mapel];
+        
+        // Buat badge berwarna untuk setiap mapel
+        const badges = mapelList.map(kode => {
+            const m = data.mapel.find(x => x.kode === kode);
+            return `<span class="badge" style="background:${m ? m.warna : '#999'}; color: white;">${m ? m.nama : kode}</span>`;
+        }).join('');
+        
         return `<tr>
             <td>${g.nip}</td>
             <td><strong>${g.nama}</strong></td>
-            <td><span class="badge badge-info">${m ? m.nama : g.mapel}</span></td>
+            <td>${badges}</td>
             <td><button class="btn btn-danger btn-sm" onclick="hapusGuru(${i})">Hapus</button></td>
         </tr>`;
     }).join('') || '<tr><td colspan="4" style="text-align:center;color:#999;">Belum ada data</td></tr>';
@@ -468,9 +507,9 @@ function hapusRuang(i) { if(confirm('Hapus ruangan ini?')){data.ruang.splice(i,1
 
 // ========== DROPDOWN REFRESH ==========
 function refreshDropdowns() {
-    // Mapel di form guru
+    // Mapel di form guru (tanpa opsi kosong agar lebih rapi untuk multi-select)
     const gMapel = document.getElementById('guruMapel');
-    gMapel.innerHTML = '<option value="">-- Pilih Mapel --</option>' + data.mapel.map(m => `<option value="${m.kode}">${m.nama}</option>`).join('');
+    gMapel.innerHTML = data.mapel.map(m => `<option value="${m.kode}">${m.nama}</option>`).join('');
     
     // Wali di form kelas
     const kWali = document.getElementById('kelasWali');
