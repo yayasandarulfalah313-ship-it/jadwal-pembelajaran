@@ -174,7 +174,7 @@ table tr:hover { background: #f9f9f9; }
 
                 <!-- TAB GURU -->
                 <div id="tabGuru" class="tab-content">
-                    <h3>Tambah Guru</h3>
+                    <h3 id="formGuruTitle">Tambah Guru</h3>
                     <div class="form-grid">
                         <div class="form-group"><label>NIP</label><input type="text" id="guruNip" placeholder="NIP Guru"></div>
                         <div class="form-group"><label>Nama Guru</label><input type="text" id="guruNama" placeholder="Nama Lengkap"></div>
@@ -185,7 +185,9 @@ table tr:hover { background: #f9f9f9; }
                             </select>
                         </div>
                     </div>
-                    <button class="btn btn-success" onclick="tambahGuru()">+ Tambah Guru</button>
+                    <button class="btn btn-success" id="btnSimpanGuru" onclick="tambahGuru()">+ Tambah Guru</button>
+                    <button class="btn btn-warning" id="btnBatalGuru" onclick="resetFormGuru()" style="display:none;">Batal Edit</button>
+                    
                     <h3 style="margin-top:25px;">Daftar Guru</h3>
                     <table><thead><tr><th>NIP</th><th>Nama</th><th>Bidang Studi</th><th>Aksi</th></tr></thead><tbody id="tblGuru"></tbody></table>
                 </div>
@@ -403,37 +405,90 @@ function renderMapel() {
 
 function hapusMapel(i) { if(confirm('Hapus mapel ini?')){data.mapel.splice(i,1); save(); renderMapel(); refreshDropdowns();} }
 
-// ========== MASTER: GURU (DIPERBARUI UNTUK MULTI-MAPEL) ==========
+// ========== MASTER: GURU (DENGAN FITUR EDIT) ==========
 function tambahGuru() {
     const nip = document.getElementById('guruNip').value.trim();
     const nama = document.getElementById('guruNama').value.trim();
     const mapelSelect = document.getElementById('guruMapel');
-    
-    // Ambil semua pilihan yang di-block user menjadi Array
     const mapel = Array.from(mapelSelect.selectedOptions).map(option => option.value);
     
     if (!nip || !nama) return alert('Lengkapi NIP dan Nama Guru!');
-    if (mapel.length === 0) return alert('⚠️ Pilih minimal 1 Mata Pelajaran untuk guru ini!\n(Tahan tombol Ctrl atau Cmd di keyboard saat mengklik pilihan)');
+    if (mapel.length === 0) return alert('⚠️ Pilih minimal 1 Mata Pelajaran!');
     if (data.guru.find(g => g.nip === nip)) return alert('NIP sudah terdaftar!');
     
-    // Simpan mapel sebagai Array
     data.guru.push({nip, nama, mapel});
-    save(); 
-    renderGuru(); 
-    refreshDropdowns();
+    save(); renderGuru(); refreshDropdowns();
+    resetFormGuru();
+}
+
+function editGuru(nip) {
+    const guru = data.guru.find(g => g.nip === nip);
+    if (!guru) return;
+
+    // Isi form dengan data guru
+    document.getElementById('guruNip').value = guru.nip;
+    document.getElementById('guruNip').readOnly = true; // Kunci NIP agar tidak bisa diubah
+    document.getElementById('guruNama').value = guru.nama;
+    document.getElementById('formGuruTitle').innerText = 'Edit Data Guru';
+
+    // Pilih mapel yang sesuai
+    const mapelSelect = document.getElementById('guruMapel');
+    const mapelList = Array.isArray(guru.mapel) ? guru.mapel : [guru.mapel];
     
+    Array.from(mapelSelect.options).forEach(opt => opt.selected = false);
+    mapelList.forEach(kode => {
+        const option = mapelSelect.querySelector(`option[value="${kode}"]`);
+        if (option) option.selected = true;
+    });
+
+    // Ubah tampilan tombol
+    const btnSimpan = document.getElementById('btnSimpanGuru');
+    btnSimpan.innerText = '💾 Simpan Perubahan';
+    btnSimpan.className = 'btn btn-primary';
+    btnSimpan.setAttribute('onclick', 'updateGuru()');
+    
+    document.getElementById('btnBatalGuru').style.display = 'inline-block';
+}
+
+function updateGuru() {
+    const nip = document.getElementById('guruNip').value.trim();
+    const nama = document.getElementById('guruNama').value.trim();
+    const mapelSelect = document.getElementById('guruMapel');
+    const mapel = Array.from(mapelSelect.selectedOptions).map(option => option.value);
+
+    if (!nip || !nama) return alert('Lengkapi NIP dan Nama Guru!');
+    if (mapel.length === 0) return alert('⚠️ Pilih minimal 1 Mata Pelajaran!');
+
+    const index = data.guru.findIndex(g => g.nip === nip);
+    if (index !== -1) {
+        data.guru[index] = { nip, nama, mapel };
+        save();
+        renderGuru();
+        refreshDropdowns();
+        resetFormGuru();
+        alert('✅ Data guru berhasil diperbarui!');
+    }
+}
+
+function resetFormGuru() {
     document.getElementById('guruNip').value = '';
+    document.getElementById('guruNip').readOnly = false;
     document.getElementById('guruNama').value = '';
-    mapelSelect.selectedIndex = -1; // Reset pilihan
+    document.getElementById('guruMapel').selectedIndex = -1;
+    document.getElementById('formGuruTitle').innerText = 'Tambah Guru';
+
+    const btnSimpan = document.getElementById('btnSimpanGuru');
+    btnSimpan.innerText = '+ Tambah Guru';
+    btnSimpan.className = 'btn btn-success';
+    btnSimpan.setAttribute('onclick', 'tambahGuru()');
+
+    document.getElementById('btnBatalGuru').style.display = 'none';
 }
 
 function renderGuru() {
     const tbody = document.getElementById('tblGuru');
     tbody.innerHTML = data.guru.map((g,i) => {
-        // Handle data lama (masih string) atau data baru (sudah array)
         const mapelList = Array.isArray(g.mapel) ? g.mapel : [g.mapel];
-        
-        // Buat badge berwarna untuk setiap mapel
         const badges = mapelList.map(kode => {
             const m = data.mapel.find(x => x.kode === kode);
             return `<span class="badge" style="background:${m ? m.warna : '#999'}; color: white;">${m ? m.nama : kode}</span>`;
@@ -443,12 +498,22 @@ function renderGuru() {
             <td>${g.nip}</td>
             <td><strong>${g.nama}</strong></td>
             <td>${badges}</td>
-            <td><button class="btn btn-danger btn-sm" onclick="hapusGuru(${i})">Hapus</button></td>
+            <td>
+                <button class="btn btn-primary btn-sm" onclick="editGuru('${g.nip}')">✏️ Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="hapusGuru(${i})">🗑️ Hapus</button>
+            </td>
         </tr>`;
     }).join('') || '<tr><td colspan="4" style="text-align:center;color:#999;">Belum ada data</td></tr>';
 }
 
-function hapusGuru(i) { if(confirm('Hapus guru ini?')){data.guru.splice(i,1); save(); renderGuru(); refreshDropdowns();} }
+function hapusGuru(i) { 
+    if(confirm('Hapus guru ini?')){
+        data.guru.splice(i,1); 
+        save(); 
+        renderGuru(); 
+        refreshDropdowns();
+    } 
+}
 
 // ========== MASTER: KELAS ==========
 function tambahKelas() {
@@ -507,15 +572,12 @@ function hapusRuang(i) { if(confirm('Hapus ruangan ini?')){data.ruang.splice(i,1
 
 // ========== DROPDOWN REFRESH ==========
 function refreshDropdowns() {
-    // Mapel di form guru (tanpa opsi kosong agar lebih rapi untuk multi-select)
     const gMapel = document.getElementById('guruMapel');
     gMapel.innerHTML = data.mapel.map(m => `<option value="${m.kode}">${m.nama}</option>`).join('');
     
-    // Wali di form kelas
     const kWali = document.getElementById('kelasWali');
     kWali.innerHTML = '<option value="">-- Pilih Wali --</option>' + data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
     
-    // Dropdown input jadwal
     document.getElementById('jGuru').innerHTML = '<option value="">-- Pilih Guru --</option>' + data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
     document.getElementById('jMapel').innerHTML = '<option value="">-- Pilih Mapel --</option>' + data.mapel.map(m => `<option value="${m.kode}">${m.nama}</option>`).join('');
     document.getElementById('jKelas').innerHTML = '<option value="">-- Pilih Kelas --</option>' + data.kelas.map(k => `<option value="${k.nama}">${k.nama}</option>`).join('');
@@ -537,7 +599,6 @@ function tambahJadwal() {
         return;
     }
 
-    // VALIDASI ANTI-BENTROK 3 LAPIS
     const bentrokGuru = data.jadwal.find(j => j.guru === guru && j.hari === hari && j.jam === jam);
     if (bentrokGuru) {
         const g = data.guru.find(x => x.nip === bentrokGuru.guru);
@@ -685,7 +746,6 @@ function updateStats() {
     document.getElementById('statGuru').innerText = data.guru.length;
     document.getElementById('statKelas').innerText = data.kelas.length;
     document.getElementById('statJadwal').innerText = data.jadwal.length;
-    // Hitung potensi bentrok (seharusnya 0 jika input benar)
     let bentrok = 0;
     data.jadwal.forEach((j, i) => {
         data.jadwal.forEach((k, idx) => {
@@ -741,7 +801,6 @@ function renderAll() {
     refreshDropdowns(); updateStats();
 }
 
-// Tanggal hari ini
 const hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 const bulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 const now = new Date();
