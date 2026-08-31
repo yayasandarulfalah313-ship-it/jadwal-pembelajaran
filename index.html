@@ -180,9 +180,7 @@ table tr:hover { background: #f9f9f9; }
                         <div class="form-group"><label>Nama Guru</label><input type="text" id="guruNama" placeholder="Nama Lengkap"></div>
                         <div class="form-group">
                             <label>Mata Pelajaran <small style="color:#f44336;">*(Tahan Ctrl / Cmd untuk pilih >1)*</small></label>
-                            <select id="guruMapel" multiple size="4">
-                                <!-- Opsi akan diisi otomatis oleh JavaScript -->
-                            </select>
+                            <select id="guruMapel" multiple size="4"></select>
                         </div>
                     </div>
                     <button class="btn btn-success" id="btnSimpanGuru" onclick="tambahGuru()">+ Tambah Guru</button>
@@ -262,11 +260,19 @@ table tr:hover { background: #f9f9f9; }
                             <option>Kamis</option><option>Jumat</option><option>Sabtu</option>
                         </select>
                     </div>
-                    <div class="form-group"><label>Jam Ke-</label>
-                        <select id="jJam">
-                            <option>1</option><option>2</option><option>3</option><option>4</option>
-                            <option>5</option><option>6</option><option>7</option><option>8</option>
-                            <option>9</option><option>10</option>
+                    <div class="form-group">
+                        <label>Jam Ke- <small style="color:#f44336;">*(Tahan Ctrl / Cmd untuk pilih >1)*</small></label>
+                        <select id="jJam" multiple size="4">
+                            <option value="1">Jam 1</option>
+                            <option value="2">Jam 2</option>
+                            <option value="3">Jam 3</option>
+                            <option value="4">Jam 4</option>
+                            <option value="5">Jam 5</option>
+                            <option value="6">Jam 6</option>
+                            <option value="7">Jam 7</option>
+                            <option value="8">Jam 8</option>
+                            <option value="9">Jam 9</option>
+                            <option value="10">Jam 10</option>
                         </select>
                     </div>
                 </div>
@@ -405,7 +411,7 @@ function renderMapel() {
 
 function hapusMapel(i) { if(confirm('Hapus mapel ini?')){data.mapel.splice(i,1); save(); renderMapel(); refreshDropdowns();} }
 
-// ========== MASTER: GURU (DENGAN FITUR EDIT) ==========
+// ========== MASTER: GURU ==========
 function tambahGuru() {
     const nip = document.getElementById('guruNip').value.trim();
     const nama = document.getElementById('guruNama').value.trim();
@@ -425,13 +431,11 @@ function editGuru(nip) {
     const guru = data.guru.find(g => g.nip === nip);
     if (!guru) return;
 
-    // Isi form dengan data guru
     document.getElementById('guruNip').value = guru.nip;
-    document.getElementById('guruNip').readOnly = true; // Kunci NIP agar tidak bisa diubah
+    document.getElementById('guruNip').readOnly = true;
     document.getElementById('guruNama').value = guru.nama;
     document.getElementById('formGuruTitle').innerText = 'Edit Data Guru';
 
-    // Pilih mapel yang sesuai
     const mapelSelect = document.getElementById('guruMapel');
     const mapelList = Array.isArray(guru.mapel) ? guru.mapel : [guru.mapel];
     
@@ -441,7 +445,6 @@ function editGuru(nip) {
         if (option) option.selected = true;
     });
 
-    // Ubah tampilan tombol
     const btnSimpan = document.getElementById('btnSimpanGuru');
     btnSimpan.innerText = '💾 Simpan Perubahan';
     btnSimpan.className = 'btn btn-primary';
@@ -462,10 +465,7 @@ function updateGuru() {
     const index = data.guru.findIndex(g => g.nip === nip);
     if (index !== -1) {
         data.guru[index] = { nip, nama, mapel };
-        save();
-        renderGuru();
-        refreshDropdowns();
-        resetFormGuru();
+        save(); renderGuru(); refreshDropdowns(); resetFormGuru();
         alert('✅ Data guru berhasil diperbarui!');
     }
 }
@@ -508,10 +508,7 @@ function renderGuru() {
 
 function hapusGuru(i) { 
     if(confirm('Hapus guru ini?')){
-        data.guru.splice(i,1); 
-        save(); 
-        renderGuru(); 
-        refreshDropdowns();
+        data.guru.splice(i,1); save(); renderGuru(); refreshDropdowns();
     } 
 }
 
@@ -584,48 +581,75 @@ function refreshDropdowns() {
     document.getElementById('jRuang').innerHTML = '<option value="">-- Pilih Ruangan --</option>' + data.ruang.map(r => `<option value="${r.kode}">${r.nama}</option>`).join('');
 }
 
-// ========== JADWAL (ANTI-BENTROK) ==========
+// ========== JADWAL (ANTI-BENTROK MULTI-JAM) ==========
 function tambahJadwal() {
     const guru = document.getElementById('jGuru').value;
     const mapel = document.getElementById('jMapel').value;
     const kelas = document.getElementById('jKelas').value;
     const ruang = document.getElementById('jRuang').value;
     const hari = document.getElementById('jHari').value;
-    const jam = document.getElementById('jJam').value;
+    const jamSelect = document.getElementById('jJam');
+    const jams = Array.from(jamSelect.selectedOptions).map(opt => opt.value);
     const status = document.getElementById('inputStatus');
 
     if (!guru || !mapel || !kelas || !ruang) {
         status.innerHTML = '<div class="alert alert-danger">⚠️ Lengkapi semua field!</div>';
         return;
     }
-
-    const bentrokGuru = data.jadwal.find(j => j.guru === guru && j.hari === hari && j.jam === jam);
-    if (bentrokGuru) {
-        const g = data.guru.find(x => x.nip === bentrokGuru.guru);
-        status.innerHTML = `<div class="alert alert-danger">🚫 <strong>BENTROK GURU!</strong> ${g.nama} sudah mengajar di ${hari} jam ke-${jam} (Kelas: ${bentrokGuru.kelas}).</div>`;
+    if (jams.length === 0) {
+        status.innerHTML = '<div class="alert alert-danger">⚠️ Pilih minimal 1 Jam Pelajaran!</div>';
         return;
     }
 
-    const bentrokKelas = data.jadwal.find(j => j.kelas === kelas && j.hari === hari && j.jam === jam);
-    if (bentrokKelas) {
-        status.innerHTML = `<div class="alert alert-danger">🚫 <strong>BENTROK KELAS!</strong> ${kelas} sudah ada jadwal di ${hari} jam ke-${jam} (Mapel: ${bentrokKelas.mapel}).</div>`;
-        return;
+    // Urutkan jam agar terproses secara berurutan (1, 2, 3...)
+    jams.sort((a, b) => parseInt(a) - parseInt(b));
+
+    // 1. CEK BENTROK UNTUK SEMUA JAM YANG DIPILIH
+    for (let jam of jams) {
+        const bentrokGuru = data.jadwal.find(j => j.guru === guru && j.hari === hari && j.jam === jam);
+        if (bentrokGuru) {
+            const g = data.guru.find(x => x.nip === bentrokGuru.guru);
+            status.innerHTML = `<div class="alert alert-danger">🚫 <strong>BENTROK GURU!</strong> ${g.nama} sudah mengajar di ${hari} jam ke-${jam} (Kelas: ${bentrokGuru.kelas}).</div>`;
+            return;
+        }
+
+        const bentrokKelas = data.jadwal.find(j => j.kelas === kelas && j.hari === hari && j.jam === jam);
+        if (bentrokKelas) {
+            status.innerHTML = `<div class="alert alert-danger">🚫 <strong>BENTROK KELAS!</strong> ${kelas} sudah ada jadwal di ${hari} jam ke-${jam} (Mapel: ${bentrokKelas.mapel}).</div>`;
+            return;
+        }
+
+        const bentrokRuang = data.jadwal.find(j => j.ruang === ruang && j.hari === hari && j.jam === jam);
+        if (bentrokRuang) {
+            status.innerHTML = `<div class="alert alert-danger">🚫 <strong>BENTROK RUANGAN!</strong> ${ruang} sudah dipakai di ${hari} jam ke-${jam} (Kelas: ${bentrokRuang.kelas}).</div>`;
+            return;
+        }
     }
 
-    const bentrokRuang = data.jadwal.find(j => j.ruang === ruang && j.hari === hari && j.jam === jam);
-    if (bentrokRuang) {
-        status.innerHTML = `<div class="alert alert-danger">🚫 <strong>BENTROK RUANGAN!</strong> ${ruang} sudah dipakai di ${hari} jam ke-${jam} (Kelas: ${bentrokRuang.kelas}).</div>`;
-        return;
+    // 2. SIMPAN SEMUA JAM (Jika tidak ada bentrok)
+    const baseId = Date.now();
+    for (let i = 0; i < jams.length; i++) {
+        data.jadwal.push({
+            guru, 
+            mapel, 
+            kelas, 
+            ruang, 
+            hari, 
+            jam: jams[i], 
+            id: baseId + i // ID unik untuk setiap entri jam agar bisa dihapus terpisah
+        });
     }
-
-    data.jadwal.push({guru, mapel, kelas, ruang, hari, jam, id: Date.now()});
-    save(); renderJadwal();
-    status.innerHTML = '<div class="alert alert-success">✅ Jadwal berhasil disimpan tanpa bentrok!</div>';
+    
+    save(); 
+    renderJadwal();
+    status.innerHTML = `<div class="alert alert-success">✅ Jadwal berhasil disimpan untuk Jam ke-${jams.join(' dan ')} tanpa bentrok!</div>`;
     resetFormJadwal();
 }
 
 function resetFormJadwal() {
     ['jGuru','jMapel','jKelas','jRuang'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('jJam').selectedIndex = -1; // Reset pilihan jam
+    document.getElementById('inputStatus').innerHTML = ''; // Bersihkan status
 }
 
 function renderJadwal() {
