@@ -5,12 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SiJAB - Sistem Jadwal Pembelajaran Anti-Bentrok</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+/* --- RESET & BASIC --- */
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 body { background: #f0f2f5; color: #333; }
 
-/* LAYOUT */
+/* --- LAYOUT --- */
 .app { display: flex; min-height: 100vh; }
-.sidebar { width: 260px; background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 20px 0; position: fixed; height: 100vh; overflow-y: auto; }
+.sidebar { width: 260px; background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 20px 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 100; }
 .sidebar h1 { padding: 0 20px 20px; font-size: 22px; border-bottom: 1px solid rgba(255,255,255,0.1); }
 .sidebar h1 span { font-size: 12px; display: block; opacity: 0.7; font-weight: normal; margin-top: 5px; }
 .menu { list-style: none; margin-top: 20px; }
@@ -24,7 +25,7 @@ body { background: #f0f2f5; color: #333; }
 .header h2 { color: #1e3c72; }
 .header .date { color: #666; font-size: 14px; }
 
-/* CARDS & STATS */
+/* --- CARDS & STATS --- */
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px; }
 .stat-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid; }
 .stat-card.blue { border-color: #2196F3; }
@@ -34,35 +35,21 @@ body { background: #f0f2f5; color: #333; }
 .stat-card .label { color: #666; font-size: 13px; text-transform: uppercase; }
 .stat-card .value { font-size: 32px; font-weight: bold; margin-top: 5px; color: #1e3c72; }
 
-/* PANELS */
+/* --- PANELS & FORMS --- */
 .panel { background: white; border-radius: 10px; padding: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
 .panel h3 { color: #1e3c72; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #f0f2f5; }
-
-/* FORMS */
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
 .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #555; }
-.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; transition: 0.3s; }
+.form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; transition: 0.3s; }
 .form-group input:focus, .form-group select:focus { outline: none; border-color: #2a5298; box-shadow: 0 0 0 3px rgba(42,82,152,0.1); }
 
-/* MULTI-SELECT STYLE KHUSUS */
-.form-group select[multiple] { 
-    height: auto; 
-    min-height: 110px; 
-    padding: 5px;
-}
-.form-group select[multiple] option {
-    padding: 8px;
-    border-radius: 4px;
-    margin-bottom: 2px;
-    cursor: pointer;
-}
-.form-group select[multiple] option:checked {
-    background: #2a5298 linear-gradient(0deg, #2a5298 0%, #2a5298 100%);
-    color: white;
-}
+/* Multi-select styling */
+.form-group select[multiple] { height: auto; min-height: 110px; padding: 5px; }
+.form-group select[multiple] option { padding: 8px; border-radius: 4px; margin-bottom: 2px; cursor: pointer; }
+.form-group select[multiple] option:checked { background: #2a5298; color: white; }
 
-/* BUTTONS */
-.btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; transition: 0.3s; margin-right: 5px; }
+/* --- BUTTONS --- */
+.btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; transition: 0.3s; margin-right: 5px; margin-bottom: 5px; }
 .btn-primary { background: #2a5298; color: white; }
 .btn-primary:hover { background: #1e3c72; }
 .btn-success { background: #4CAF50; color: white; }
@@ -72,51 +59,46 @@ body { background: #f0f2f5; color: #333; }
 .btn-warning { background: #FF9800; color: white; }
 .btn-sm { padding: 6px 12px; font-size: 12px; }
 
-/* TABLES */
-table { width: 100%; border-collapse: collapse; }
+/* --- TABLES --- */
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
 table th { background: #1e3c72; color: white; padding: 12px; text-align: left; font-size: 13px; }
 table td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
 table tr:hover { background: #f9f9f9; }
-.badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; display: inline-block; margin: 2px; }
+.badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; display: inline-block; margin: 2px; color: white; }
 .badge-success { background: #d4edda; color: #155724; }
 .badge-danger { background: #f8d7da; color: #721c24; }
 .badge-info { background: #d1ecf1; color: #0c5460; }
 
-/* TABS */
+/* --- TABS & ALERTS --- */
 .tabs { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 2px solid #eee; }
 .tab { padding: 10px 20px; cursor: pointer; border-bottom: 3px solid transparent; font-weight: 600; color: #666; }
 .tab.active { color: #2a5298; border-bottom-color: #2a5298; }
-
-/* ALERTS */
 .alert { padding: 12px 18px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; }
 .alert-success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
 .alert-danger { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
 .alert-info { background: #d1ecf1; color: #0c5460; border-left: 4px solid #17a2b8; }
 
-/* HIDDEN */
+/* --- UTILS --- */
 .page { display: none; }
 .page.active { display: block; }
+.matrix-table th, .matrix-table td { text-align: center; font-size: 12px; padding: 8px; border: 1px solid #ddd; }
+.matrix-table td.filled { vertical-align: top; }
 
-/* SCHEDULE MATRIX */
-.matrix-table th, .matrix-table td { text-align: center; font-size: 12px; padding: 8px; }
-.matrix-table td { background: #f9f9f9; }
-.matrix-table td.filled { background: #e3f2fd; color: #1565c0; font-weight: 600; }
-
-/* RESPONSIVE */
+/* --- RESPONSIVE & PRINT --- */
 @media (max-width: 768px) {
     .sidebar { width: 100%; height: auto; position: relative; }
     .main { margin-left: 0; }
 }
-
-/* PRINT */
 @media print {
-    .sidebar, .btn, .header, .tabs { display: none !important; }
+    .sidebar, .btn, .header, .tabs, .no-print { display: none !important; }
     .main { margin: 0; padding: 0; }
     .panel { box-shadow: none; page-break-inside: avoid; }
+    body { background: white; }
 }
 </style>
 </head>
 <body>
+
 <div class="app">
     <!-- SIDEBAR -->
     <aside class="sidebar">
@@ -128,7 +110,7 @@ table tr:hover { background: #f9f9f9; }
             <li onclick="showPage('view', this)"><span class="icon">👁️</span> Lihat Jadwal</li>
             <li onclick="showPage('matrix', this)"><span class="icon">📅</span> Matriks Jadwal</li>
             <li onclick="showPage('settings', this)"><span class="icon">⚙️</span> Pengaturan</li>
-        </ul>
+        </td>
     </aside>
 
     <!-- MAIN CONTENT -->
@@ -144,20 +126,18 @@ table tr:hover { background: #f9f9f9; }
                 <div class="stat-card blue"><div class="label">Total Guru</div><div class="value" id="statGuru">0</div></div>
                 <div class="stat-card green"><div class="label">Total Kelas</div><div class="value" id="statKelas">0</div></div>
                 <div class="stat-card orange"><div class="label">Total Jadwal</div><div class="value" id="statJadwal">0</div></div>
-                <div class="stat-card red"><div class="label">Bentrok Terdeteksi</div><div class="value" id="statBentrok">0</div></div>
+                <div class="stat-card red"><div class="label">Bentrok</div><div class="value" id="statBentrok">0</div></div>
             </div>
             <div class="panel">
                 <h3>📋 Ringkasan Sistem</h3>
                 <div class="alert alert-info">
                     <strong>Selamat datang di SiJAB!</strong><br>
-                    Sistem ini membantu Anda menyusun jadwal pembelajaran tanpa bentrok. Fitur validasi akan otomatis mengecek bentrok pada <strong>Guru</strong>, <strong>Kelas</strong>, dan <strong>Ruangan</strong>.
+                    Sistem ini membantu menyusun jadwal tanpa bentrok. Validasi otomatis mengecek bentrok pada <strong>Guru</strong>, <strong>Kelas</strong>, dan <strong>Ruangan</strong>.
                 </div>
-                <h4 style="margin-top:15px; color:#1e3c72;">Langkah Penggunaan:</h4>
                 <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
                     <li>Lengkapi <strong>Data Master</strong> (Guru, Kelas, Mapel, Ruangan)</li>
                     <li>Masukkan jadwal melalui menu <strong>Input Jadwal</strong></li>
-                    <li>Lihat hasil jadwal di menu <strong>Lihat Jadwal</strong> atau <strong>Matriks Jadwal</strong></li>
-                    <li>Cetak jadwal melalui menu <strong>Pengaturan</strong></li>
+                    <li>Lihat hasil di menu <strong>Lihat Jadwal</strong> atau <strong>Matriks Jadwal</strong></li>
                 </ol>
             </div>
         </div>
@@ -179,13 +159,12 @@ table tr:hover { background: #f9f9f9; }
                         <div class="form-group"><label>NIP</label><input type="text" id="guruNip" placeholder="NIP Guru"></div>
                         <div class="form-group"><label>Nama Guru</label><input type="text" id="guruNama" placeholder="Nama Lengkap"></div>
                         <div class="form-group">
-                            <label>Mata Pelajaran <small style="color:#f44336;">*(Tahan Ctrl / Cmd untuk pilih >1)*</small></label>
+                            <label>Mata Pelajaran <small style="color:#f44336;">*(Tahan Ctrl/Cmd untuk pilih >1)*</small></label>
                             <select id="guruMapel" multiple size="4"></select>
                         </div>
                     </div>
                     <button class="btn btn-success" id="btnSimpanGuru" onclick="tambahGuru()">+ Tambah Guru</button>
                     <button class="btn btn-warning" id="btnBatalGuru" onclick="resetFormGuru()" style="display:none;">Batal Edit</button>
-                    
                     <h3 style="margin-top:25px;">Daftar Guru</h3>
                     <table><thead><tr><th>NIP</th><th>Nama</th><th>Bidang Studi</th><th>Aksi</th></tr></thead><tbody id="tblGuru"></tbody></table>
                 </div>
@@ -195,9 +174,7 @@ table tr:hover { background: #f9f9f9; }
                     <h3>Tambah Kelas</h3>
                     <div class="form-grid">
                         <div class="form-group"><label>Nama Kelas</label><input type="text" id="kelasNama" placeholder="Contoh: X IPA 1"></div>
-                        <div class="form-group"><label>Wali Kelas</label>
-                            <select id="kelasWali"><option value="">-- Pilih Wali --</option></select>
-                        </div>
+                        <div class="form-group"><label>Wali Kelas</label><select id="kelasWali"><option value="">-- Pilih Wali --</option></select></div>
                         <div class="form-group"><label>Kapasitas</label><input type="number" id="kelasKap" placeholder="Jumlah Siswa"></div>
                     </div>
                     <button class="btn btn-success" onclick="tambahKelas()">+ Tambah Kelas</button>
@@ -209,7 +186,7 @@ table tr:hover { background: #f9f9f9; }
                 <div id="tabMapel" class="tab-content" style="display:none;">
                     <h3>Tambah Mata Pelajaran</h3>
                     <div class="form-grid">
-                        <div class="form-group"><label>Kode Mapel</label><input type="text" id="mapelKode" placeholder="MTK, BIN, dll"></div>
+                        <div class="form-group"><label>Kode Mapel</label><input type="text" id="mapelKode" placeholder="MTK, BIN"></div>
                         <div class="form-group"><label>Nama Mapel</label><input type="text" id="mapelNama" placeholder="Matematika"></div>
                         <div class="form-group"><label>Warna Label</label><input type="color" id="mapelWarna" value="#2196F3"></div>
                     </div>
@@ -237,23 +214,13 @@ table tr:hover { background: #f9f9f9; }
         <div id="input" class="page">
             <div class="panel">
                 <h3>✏️ Input Jadwal Pembelajaran</h3>
-                <div class="alert alert-info">
-                    💡 Sistem akan otomatis mendeteksi bentrok pada <strong>Guru</strong>, <strong>Kelas</strong>, dan <strong>Ruangan</strong>.
-                </div>
+                <div class="alert alert-info">💡 Sistem akan otomatis mendeteksi bentrok pada <strong>Guru</strong>, <strong>Kelas</strong>, dan <strong>Ruangan</strong>.</div>
                 <div id="inputStatus"></div>
                 <div class="form-grid">
-                    <div class="form-group"><label>Guru</label>
-                        <select id="jGuru"><option value="">-- Pilih Guru --</option></select>
-                    </div>
-                    <div class="form-group"><label>Mata Pelajaran</label>
-                        <select id="jMapel"><option value="">-- Pilih Mapel --</option></select>
-                    </div>
-                    <div class="form-group"><label>Kelas</label>
-                        <select id="jKelas"><option value="">-- Pilih Kelas --</option></select>
-                    </div>
-                    <div class="form-group"><label>Ruangan</label>
-                        <select id="jRuang"><option value="">-- Pilih Ruangan --</option></select>
-                    </div>
+                    <div class="form-group"><label>Guru</label><select id="jGuru"><option value="">-- Pilih Guru --</option></select></div>
+                    <div class="form-group"><label>Mata Pelajaran</label><select id="jMapel"><option value="">-- Pilih Mapel --</option></select></div>
+                    <div class="form-group"><label>Kelas</label><select id="jKelas"><option value="">-- Pilih Kelas --</option></select></div>
+                    <div class="form-group"><label>Ruangan</label><select id="jRuang"><option value="">-- Pilih Ruangan --</option></select></div>
                     <div class="form-group"><label>Hari</label>
                         <select id="jHari">
                             <option>Senin</option><option>Selasa</option><option>Rabu</option>
@@ -261,18 +228,11 @@ table tr:hover { background: #f9f9f9; }
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Jam Ke- <small style="color:#f44336;">*(Tahan Ctrl / Cmd untuk pilih >1)*</small></label>
+                        <label>Jam Ke- <small style="color:#f44336;">*(Tahan Ctrl/Cmd untuk pilih >1)*</small></label>
                         <select id="jJam" multiple size="4">
-                            <option value="1">Jam 1</option>
-                            <option value="2">Jam 2</option>
-                            <option value="3">Jam 3</option>
-                            <option value="4">Jam 4</option>
-                            <option value="5">Jam 5</option>
-                            <option value="6">Jam 6</option>
-                            <option value="7">Jam 7</option>
-                            <option value="8">Jam 8</option>
-                            <option value="9">Jam 9</option>
-                            <option value="10">Jam 10</option>
+                            <option value="1">Jam 1</option><option value="2">Jam 2</option><option value="3">Jam 3</option>
+                            <option value="4">Jam 4</option><option value="5">Jam 5</option><option value="6">Jam 6</option>
+                            <option value="7">Jam 7</option><option value="8">Jam 8</option><option value="9">Jam 9</option><option value="10">Jam 10</option>
                         </select>
                     </div>
                 </div>
@@ -293,116 +253,48 @@ table tr:hover { background: #f9f9f9; }
                 <h3>👁️ Lihat Jadwal</h3>
                 <div class="form-grid">
                     <div class="form-group"><label>Tampilkan Berdasarkan</label>
-                        <select id="viewMode" onchange="renderView()">
+                        <select id="viewMode" onchange="initView()">
                             <option value="kelas">Per Kelas</option>
                             <option value="guru">Per Guru</option>
                             <option value="ruang">Per Ruangan</option>
                         </select>
                     </div>
-                    <div class="form-group"><label>Pilih</label>
-                        <select id="viewSelect" onchange="renderView()"></select>
-                    </div>
+                    <div class="form-group"><label>Pilih</label><select id="viewSelect" onchange="renderView()"></select></div>
                 </div>
-                <button class="btn btn-primary" onclick="window.print()">🖨️ Cetak Jadwal</button>
+                <button class="btn btn-primary no-print" onclick="window.print()">🖨️ Cetak Jadwal</button>
                 <div id="viewResult" style="margin-top:20px;"></div>
             </div>
         </div>
 
-// ========== MATRIKS JADWAL ==========
-function initMatrix() {
-    const mode = document.getElementById('matrixMode').value;
-    const sel = document.getElementById('matrixSelect');
-    
-    if (mode === 'kelas') {
-        sel.innerHTML = '<option value="">-- Pilih Kelas --</option>' + 
-            data.kelas.map(k => `<option value="${k.nama}">${k.nama}</option>`).join('');
-    } else if (mode === 'guru') {
-        sel.innerHTML = '<option value="">-- Pilih Guru --</option>' + 
-            data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
-    }
-    
-    renderMatrix();
-}
+        <!-- MATRIKS JADWAL -->
+        <div id="matrix" class="page">
+            <div class="panel">
+                <h3>📅 Matriks Jadwal Keseluruhan</h3>
+                <div class="form-grid">
+                    <div class="form-group"><label>Lihat Matriks Untuk</label>
+                        <select id="matrixMode" onchange="initMatrix()">
+                            <option value="kelas">Kelas</option>
+                            <option value="guru">Guru</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Pilih</label><select id="matrixSelect" onchange="renderMatrix()"></select></div>
+                </div>
+                <button class="btn btn-primary no-print" onclick="window.print()">🖨️ Cetak Matriks</button>
+                <div id="matrixResult" style="margin-top:20px; overflow-x:auto;"></div>
+            </div>
+        </div>
 
-function renderMatrix() {
-    const mode = document.getElementById('matrixMode').value;
-    const val = document.getElementById('matrixSelect').value;
-    
-    if (!val) {
-        document.getElementById('matrixResult').innerHTML = 
-            '<div class="alert alert-info">Silakan pilih ' + 
-            (mode === 'kelas' ? 'kelas' : 'guru') + ' untuk melihat matriks jadwal.</div>';
-        return;
-    }
-    
-    const hari = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-    const jam = [1,2,3,4,5,6,7,8,9,10];
-    
-    let filtered = [];
-    let title = '';
-    
-    if (mode === 'kelas') {
-        filtered = data.jadwal.filter(j => j.kelas === val);
-        title = `Matriks Jadwal Kelas: ${val}`;
-    } else {
-        filtered = data.jadwal.filter(j => j.guru === val);
-        const guru = data.guru.find(g => g.nip === val);
-        title = `Matriks Jadwal Mengajar: ${guru ? guru.nama : val}`;
-    }
-    
-    let html = `<h3 style="color:#1e3c72; margin-bottom:15px;">${title}</h3>`;
-    html += '<table class="matrix-table" style="border-collapse:collapse; width:100%;">';
-    html += '<thead><tr style="background:#1e3c72; color:white;"><th>Jam / Hari</th>';
-    hari.forEach(h => html += `<th style="padding:10px;">${h}</th>`);
-    html += '</tr></thead><tbody>';
-    
-    jam.forEach(j => {
-        html += `<tr style="background:#f0f2f5;"><th style="padding:8px; text-align:left;">Jam ${j}</th>`;
-        hari.forEach(h => {
-            const cell = filtered.find(x => x.hari === h && parseInt(x.jam) === j);
-            if (cell) {
-                const m = data.mapel.find(x => x.kode === cell.mapel);
-                const g = data.guru.find(x => x.nip === cell.guru);
-                const k = data.kelas.find(x => x.nama === cell.kelas);
-                
-                let label = '';
-                if (mode === 'kelas') {
-                    label = `<strong>${m ? m.nama : cell.mapel}</strong><br>
-                             <small style="color:#666;">${g ? g.nama : ''}</small><br>
-                             <small style="color:#999;">${cell.ruang}</small>`;
-                } else {
-                    label = `<strong>${cell.kelas}</strong><br>
-                             <small style="color:#666;">${m ? m.nama : cell.mapel}</small><br>
-                             <small style="color:#999;">${cell.ruang}</small>`;
-                }
-                
-                html += `<td style="padding:8px; background:${m ? m.warna + '22' : '#e3f2fd'}; 
-                         color:${m ? m.warna : '#1565c0'}; border:1px solid #ddd; 
-                         vertical-align:top; font-size:11px;">${label}</td>`;
-            } else {
-                html += '<td style="padding:8px; border:1px solid #ddd; text-align:center; color:#ccc;">-</td>';
-            }
-        });
-        html += '</tr>';
-    });
-    html += '</tbody></table>';
-    document.getElementById('matrixResult').innerHTML = html;
-}
         <!-- SETTINGS -->
         <div id="settings" class="page">
             <div class="panel">
                 <h3>⚙️ Pengaturan Sistem</h3>
-                <div class="alert alert-info">
-                    💾 Data disimpan otomatis di browser (LocalStorage). Gunakan fitur Export untuk backup.
-                </div>
+                <div class="alert alert-info">💾 Data disimpan otomatis di browser (LocalStorage). Gunakan fitur Export untuk backup.</div>
                 <h4 style="margin-top:20px; color:#1e3c72;">Backup & Restore</h4>
-                <button class="btn btn-success" onclick="exportData()">📥 Export Semua Data (JSON)</button>
+                <button class="btn btn-success" onclick="exportData()">📥 Export Data (JSON)</button>
                 <button class="btn btn-warning" onclick="document.getElementById('importFile').click()">📤 Import Data</button>
                 <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)">
-                
                 <h4 style="margin-top:25px; color:#1e3c72;">Cetak Dokumen</h4>
                 <button class="btn btn-primary" onclick="window.print()">🖨️ Cetak Halaman Ini</button>
-                
                 <h4 style="margin-top:25px; color:#c62828;">Zona Berbahaya</h4>
                 <button class="btn btn-danger" onclick="resetAll()">🗑️ Reset Semua Data</button>
             </div>
@@ -410,8 +302,11 @@ function renderMatrix() {
     </main>
 </div>
 
+<!-- ========================================== -->
+<!-- SEMUA JAVASCRIPT BERADA DI DALAM TAG INI -->
+<!-- ========================================== -->
 <script>
-// ========== DATA STORE ==========
+// ========== 1. DATA STORE ==========
 let data = {
     guru: JSON.parse(localStorage.getItem('guru') || '[]'),
     kelas: JSON.parse(localStorage.getItem('kelas') || '[]'),
@@ -425,7 +320,7 @@ function save() {
     updateStats();
 }
 
-// ========== NAVIGATION ==========
+// ========== 2. NAVIGATION ==========
 function showPage(id, el) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
@@ -445,7 +340,7 @@ function showTab(id, el) {
     el.classList.add('active');
 }
 
-// ========== MASTER: MAPEL ==========
+// ========== 3. MASTER: MAPEL ==========
 function tambahMapel() {
     const kode = document.getElementById('mapelKode').value.trim();
     const nama = document.getElementById('mapelNama').value.trim();
@@ -468,10 +363,9 @@ function renderMapel() {
             <td><button class="btn btn-danger btn-sm" onclick="hapusMapel(${i})">Hapus</button></td>
         </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#999;">Belum ada data</td></tr>';
 }
-
 function hapusMapel(i) { if(confirm('Hapus mapel ini?')){data.mapel.splice(i,1); save(); renderMapel(); refreshDropdowns();} }
 
-// ========== MASTER: GURU ==========
+// ========== 4. MASTER: GURU (Multi-Mapel & Edit) ==========
 function tambahGuru() {
     const nip = document.getElementById('guruNip').value.trim();
     const nama = document.getElementById('guruNama').value.trim();
@@ -492,7 +386,7 @@ function editGuru(nip) {
     if (!guru) return;
 
     document.getElementById('guruNip').value = guru.nip;
-    document.getElementById('guruNip').readOnly = true;
+    document.getElementById('guruNip').readOnly = true; // Kunci NIP saat edit
     document.getElementById('guruNama').value = guru.nama;
     document.getElementById('formGuruTitle').innerText = 'Edit Data Guru';
 
@@ -509,7 +403,6 @@ function editGuru(nip) {
     btnSimpan.innerText = '💾 Simpan Perubahan';
     btnSimpan.className = 'btn btn-primary';
     btnSimpan.setAttribute('onclick', 'updateGuru()');
-    
     document.getElementById('btnBatalGuru').style.display = 'inline-block';
 }
 
@@ -541,7 +434,6 @@ function resetFormGuru() {
     btnSimpan.innerText = '+ Tambah Guru';
     btnSimpan.className = 'btn btn-success';
     btnSimpan.setAttribute('onclick', 'tambahGuru()');
-
     document.getElementById('btnBatalGuru').style.display = 'none';
 }
 
@@ -551,7 +443,7 @@ function renderGuru() {
         const mapelList = Array.isArray(g.mapel) ? g.mapel : [g.mapel];
         const badges = mapelList.map(kode => {
             const m = data.mapel.find(x => x.kode === kode);
-            return `<span class="badge" style="background:${m ? m.warna : '#999'}; color: white;">${m ? m.nama : kode}</span>`;
+            return `<span class="badge" style="background:${m ? m.warna : '#999'}">${m ? m.nama : kode}</span>`;
         }).join('');
         
         return `<tr>
@@ -565,14 +457,9 @@ function renderGuru() {
         </tr>`;
     }).join('') || '<tr><td colspan="4" style="text-align:center;color:#999;">Belum ada data</td></tr>';
 }
+function hapusGuru(i) { if(confirm('Hapus guru ini?')){data.guru.splice(i,1); save(); renderGuru(); refreshDropdowns();} }
 
-function hapusGuru(i) { 
-    if(confirm('Hapus guru ini?')){
-        data.guru.splice(i,1); save(); renderGuru(); refreshDropdowns();
-    } 
-}
-
-// ========== MASTER: KELAS ==========
+// ========== 5. MASTER: KELAS & RUANGAN ==========
 function tambahKelas() {
     const nama = document.getElementById('kelasNama').value.trim();
     const wali = document.getElementById('kelasWali').value;
@@ -584,23 +471,15 @@ function tambahKelas() {
     document.getElementById('kelasNama').value = '';
     document.getElementById('kelasKap').value = '';
 }
-
 function renderKelas() {
     const tbody = document.getElementById('tblKelas');
     tbody.innerHTML = data.kelas.map((k,i) => {
         const g = data.guru.find(x => x.nip === k.wali);
-        return `<tr>
-            <td><strong>${k.nama}</strong></td>
-            <td>${g ? g.nama : '-'}</td>
-            <td>${k.kap || '-'} siswa</td>
-            <td><button class="btn btn-danger btn-sm" onclick="hapusKelas(${i})">Hapus</button></td>
-        </tr>`;
+        return `<tr><td><strong>${k.nama}</strong></td><td>${g ? g.nama : '-'}</td><td>${k.kap || '-'} siswa</td><td><button class="btn btn-danger btn-sm" onclick="hapusKelas(${i})">Hapus</button></td></tr>`;
     }).join('') || '<tr><td colspan="4" style="text-align:center;color:#999;">Belum ada data</td></tr>';
 }
-
 function hapusKelas(i) { if(confirm('Hapus kelas ini?')){data.kelas.splice(i,1); save(); renderKelas(); refreshDropdowns();} }
 
-// ========== MASTER: RUANGAN ==========
 function tambahRuang() {
     const kode = document.getElementById('ruangKode').value.trim();
     const nama = document.getElementById('ruangNama').value.trim();
@@ -613,27 +492,20 @@ function tambahRuang() {
     document.getElementById('ruangNama').value = '';
     document.getElementById('ruangKap').value = '';
 }
-
 function renderRuang() {
     const tbody = document.getElementById('tblRuang');
     tbody.innerHTML = data.ruang.map((r,i) => `
-        <tr>
-            <td><strong>${r.kode}</strong></td>
-            <td>${r.nama}</td>
-            <td>${r.kap || '-'} orang</td>
-            <td><button class="btn btn-danger btn-sm" onclick="hapusRuang(${i})">Hapus</button></td>
-        </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#999;">Belum ada data</td></tr>';
+        <tr><td><strong>${r.kode}</strong></td><td>${r.nama}</td><td>${r.kap || '-'} orang</td><td><button class="btn btn-danger btn-sm" onclick="hapusRuang(${i})">Hapus</button></td></tr>
+    `).join('') || '<tr><td colspan="4" style="text-align:center;color:#999;">Belum ada data</td></tr>';
 }
-
 function hapusRuang(i) { if(confirm('Hapus ruangan ini?')){data.ruang.splice(i,1); save(); renderRuang(); refreshDropdowns();} }
 
-// ========== DROPDOWN REFRESH ==========
+// ========== 6. DROPDOWN REFRESH ==========
 function refreshDropdowns() {
     const gMapel = document.getElementById('guruMapel');
     gMapel.innerHTML = data.mapel.map(m => `<option value="${m.kode}">${m.nama}</option>`).join('');
     
-    const kWali = document.getElementById('kelasWali');
-    kWali.innerHTML = '<option value="">-- Pilih Wali --</option>' + data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
+    document.getElementById('kelasWali').innerHTML = '<option value="">-- Pilih Wali --</option>' + data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
     
     document.getElementById('jGuru').innerHTML = '<option value="">-- Pilih Guru --</option>' + data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
     document.getElementById('jMapel').innerHTML = '<option value="">-- Pilih Mapel --</option>' + data.mapel.map(m => `<option value="${m.kode}">${m.nama}</option>`).join('');
@@ -641,7 +513,7 @@ function refreshDropdowns() {
     document.getElementById('jRuang').innerHTML = '<option value="">-- Pilih Ruangan --</option>' + data.ruang.map(r => `<option value="${r.kode}">${r.nama}</option>`).join('');
 }
 
-// ========== JADWAL (ANTI-BENTROK MULTI-JAM) ==========
+// ========== 7. JADWAL (ANTI-BENTROK MULTI-JAM) ==========
 function tambahJadwal() {
     const guru = document.getElementById('jGuru').value;
     const mapel = document.getElementById('jMapel').value;
@@ -652,64 +524,40 @@ function tambahJadwal() {
     const jams = Array.from(jamSelect.selectedOptions).map(opt => opt.value);
     const status = document.getElementById('inputStatus');
 
-    if (!guru || !mapel || !kelas || !ruang) {
-        status.innerHTML = '<div class="alert alert-danger">⚠️ Lengkapi semua field!</div>';
-        return;
-    }
-    if (jams.length === 0) {
-        status.innerHTML = '<div class="alert alert-danger">⚠️ Pilih minimal 1 Jam Pelajaran!</div>';
-        return;
-    }
+    if (!guru || !mapel || !kelas || !ruang) { status.innerHTML = '<div class="alert alert-danger">⚠️ Lengkapi semua field!</div>'; return; }
+    if (jams.length === 0) { status.innerHTML = '<div class="alert alert-danger">⚠️ Pilih minimal 1 Jam Pelajaran!</div>'; return; }
 
-    // Urutkan jam agar terproses secara berurutan (1, 2, 3...)
     jams.sort((a, b) => parseInt(a) - parseInt(b));
 
-    // 1. CEK BENTROK UNTUK SEMUA JAM YANG DIPILIH
+    // CEK BENTROK UNTUK SEMUA JAM YANG DIPILIH
     for (let jam of jams) {
-        const bentrokGuru = data.jadwal.find(j => j.guru === guru && j.hari === hari && j.jam === jam);
-        if (bentrokGuru) {
-            const g = data.guru.find(x => x.nip === bentrokGuru.guru);
-            status.innerHTML = `<div class="alert alert-danger">🚫 <strong>BENTROK GURU!</strong> ${g.nama} sudah mengajar di ${hari} jam ke-${jam} (Kelas: ${bentrokGuru.kelas}).</div>`;
-            return;
+        if (data.jadwal.find(j => j.guru === guru && j.hari === hari && j.jam === jam)) {
+            const g = data.guru.find(x => x.nip === guru);
+            status.innerHTML = `<div class="alert alert-danger">🚫 <strong>BENTROK GURU!</strong> ${g.nama} sudah mengajar di ${hari} jam ke-${jam}.</div>`; return;
         }
-
-        const bentrokKelas = data.jadwal.find(j => j.kelas === kelas && j.hari === hari && j.jam === jam);
-        if (bentrokKelas) {
-            status.innerHTML = `<div class="alert alert-danger">🚫 <strong>BENTROK KELAS!</strong> ${kelas} sudah ada jadwal di ${hari} jam ke-${jam} (Mapel: ${bentrokKelas.mapel}).</div>`;
-            return;
+        if (data.jadwal.find(j => j.kelas === kelas && j.hari === hari && j.jam === jam)) {
+            status.innerHTML = `<div class="alert alert-danger">🚫 <strong>BENTROK KELAS!</strong> ${kelas} sudah ada jadwal di ${hari} jam ke-${jam}.</div>`; return;
         }
-
-        const bentrokRuang = data.jadwal.find(j => j.ruang === ruang && j.hari === hari && j.jam === jam);
-        if (bentrokRuang) {
-            status.innerHTML = `<div class="alert alert-danger">🚫 <strong>BENTROK RUANGAN!</strong> ${ruang} sudah dipakai di ${hari} jam ke-${jam} (Kelas: ${bentrokRuang.kelas}).</div>`;
-            return;
+        if (data.jadwal.find(j => j.ruang === ruang && j.hari === hari && j.jam === jam)) {
+            status.innerHTML = `<div class="alert alert-danger">🚫 <strong>BENTROK RUANGAN!</strong> ${ruang} sudah dipakai di ${hari} jam ke-${jam}.</div>`; return;
         }
     }
 
-    // 2. SIMPAN SEMUA JAM (Jika tidak ada bentrok)
+    // SIMPAN SEMUA JAM
     const baseId = Date.now();
     for (let i = 0; i < jams.length; i++) {
-        data.jadwal.push({
-            guru, 
-            mapel, 
-            kelas, 
-            ruang, 
-            hari, 
-            jam: jams[i], 
-            id: baseId + i // ID unik untuk setiap entri jam agar bisa dihapus terpisah
-        });
+        data.jadwal.push({ guru, mapel, kelas, ruang, hari, jam: jams[i], id: baseId + i });
     }
     
-    save(); 
-    renderJadwal();
+    save(); renderJadwal();
     status.innerHTML = `<div class="alert alert-success">✅ Jadwal berhasil disimpan untuk Jam ke-${jams.join(' dan ')} tanpa bentrok!</div>`;
     resetFormJadwal();
 }
 
 function resetFormJadwal() {
     ['jGuru','jMapel','jKelas','jRuang'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('jJam').selectedIndex = -1; // Reset pilihan jam
-    document.getElementById('inputStatus').innerHTML = ''; // Bersihkan status
+    document.getElementById('jJam').selectedIndex = -1;
+    document.getElementById('inputStatus').innerHTML = '';
 }
 
 function renderJadwal() {
@@ -717,46 +565,38 @@ function renderJadwal() {
     const urutanHari = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
     const sorted = [...data.jadwal].sort((a,b) => urutanHari.indexOf(a.hari) - urutanHari.indexOf(b.hari) || a.jam - b.jam);
     
-    tbody.innerHTML = sorted.map((j,i) => {
+    tbody.innerHTML = sorted.map(j => {
         const g = data.guru.find(x => x.nip === j.guru);
         const m = data.mapel.find(x => x.kode === j.mapel);
         return `<tr>
-            <td><strong>${j.hari}</strong></td>
-            <td>Jam ${j.jam}</td>
-            <td>${j.kelas}</td>
-            <td><span class="badge" style="background:${m?m.warna:'#ccc'};color:white;">${m?m.nama:j.mapel}</span></td>
-            <td>${g ? g.nama : '-'}</td>
-            <td>${j.ruang}</td>
+            <td><strong>${j.hari}</strong></td><td>Jam ${j.jam}</td><td>${j.kelas}</td>
+            <td><span class="badge" style="background:${m?m.warna:'#ccc'}">${m?m.nama:j.mapel}</span></td>
+            <td>${g ? g.nama : '-'}</td><td>${j.ruang}</td>
             <td><span class="badge badge-success">✓ Valid</span></td>
             <td><button class="btn btn-danger btn-sm" onclick="hapusJadwal(${j.id})">Hapus</button></td>
         </tr>`;
     }).join('') || '<tr><td colspan="8" style="text-align:center;color:#999;">Belum ada jadwal</td></tr>';
 }
-
 function hapusJadwal(id) {
-    if(confirm('Hapus jadwal ini?')){
-        data.jadwal = data.jadwal.filter(j => j.id !== id);
-        save(); renderJadwal();
-    }
+    if(confirm('Hapus jadwal ini?')){ data.jadwal = data.jadwal.filter(j => j.id !== id); save(); renderJadwal(); }
 }
 
-// ========== LIHAT JADWAL ==========
+// ========== 8. LIHAT JADWAL ==========
 function initView() {
     const mode = document.getElementById('viewMode').value;
     const sel = document.getElementById('viewSelect');
-    if (mode === 'kelas') sel.innerHTML = data.kelas.map(k => `<option value="${k.nama}">${k.nama}</option>`).join('');
-    if (mode === 'guru') sel.innerHTML = data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
-    if (mode === 'ruang') sel.innerHTML = data.ruang.map(r => `<option value="${r.kode}">${r.nama}</option>`).join('');
+    if (mode === 'kelas') sel.innerHTML = '<option value="">-- Pilih Kelas --</option>' + data.kelas.map(k => `<option value="${k.nama}">${k.nama}</option>`).join('');
+    if (mode === 'guru') sel.innerHTML = '<option value="">-- Pilih Guru --</option>' + data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
+    if (mode === 'ruang') sel.innerHTML = '<option value="">-- Pilih Ruangan --</option>' + data.ruang.map(r => `<option value="${r.kode}">${r.nama}</option>`).join('');
     renderView();
 }
 
 function renderView() {
     const mode = document.getElementById('viewMode').value;
     const val = document.getElementById('viewSelect').value;
-    if (!val) return;
+    if (!val) { document.getElementById('viewResult').innerHTML = ''; return; }
     
-    let filtered = [];
-    let title = '';
+    let filtered = [], title = '';
     if (mode === 'kelas') { filtered = data.jadwal.filter(j => j.kelas === val); title = `Jadwal Kelas: ${val}`; }
     if (mode === 'guru') { filtered = data.jadwal.filter(j => j.guru === val); const g = data.guru.find(x=>x.nip===val); title = `Jadwal Mengajar: ${g?g.nama:val}`; }
     if (mode === 'ruang') { filtered = data.jadwal.filter(j => j.ruang === val); title = `Jadwal Ruangan: ${val}`; }
@@ -764,38 +604,29 @@ function renderView() {
     const urutanHari = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
     filtered.sort((a,b) => urutanHari.indexOf(a.hari) - urutanHari.indexOf(b.hari) || a.jam - b.jam);
 
-    let html = `<h3 style="color:#1e3c72;">${title}</h3>`;
-    html += '<table><thead><tr><th>Hari</th><th>Jam</th><th>Kelas</th><th>Mapel</th><th>Guru</th><th>Ruangan</th></tr></thead><tbody>';
+    let html = `<h3 style="color:#1e3c72;">${title}</h3><table><thead><tr><th>Hari</th><th>Jam</th><th>Kelas</th><th>Mapel</th><th>Guru</th><th>Ruangan</th></tr></thead><tbody>`;
     if (filtered.length === 0) html += '<tr><td colspan="6" style="text-align:center;color:#999;">Tidak ada jadwal</td></tr>';
     filtered.forEach(j => {
         const g = data.guru.find(x => x.nip === j.guru);
         const m = data.mapel.find(x => x.kode === j.mapel);
-        html += `<tr>
-            <td><strong>${j.hari}</strong></td>
-            <td>Jam ${j.jam}</td>
-            <td>${j.kelas}</td>
-            <td><span class="badge" style="background:${m?m.warna:'#ccc'};color:white;">${m?m.nama:j.mapel}</span></td>
-            <td>${g?g.nama:'-'}</td>
-            <td>${j.ruang}</td>
-        </tr>`;
+        html += `<tr><td><strong>${j.hari}</strong></td><td>Jam ${j.jam}</td><td>${j.kelas}</td>
+        <td><span class="badge" style="background:${m?m.warna:'#ccc'}">${m?m.nama:j.mapel}</span></td>
+        <td>${g?g.nama:'-'}</td><td>${j.ruang}</td></tr>`;
     });
     html += '</tbody></table>';
     document.getElementById('viewResult').innerHTML = html;
 }
 
-// ========== MATRIKS JADWAL ==========
+// ========== 9. MATRIKS JADWAL (DIPERBAIKI) ==========
 function initMatrix() {
     const mode = document.getElementById('matrixMode').value;
     const sel = document.getElementById('matrixSelect');
     
     if (mode === 'kelas') {
-        sel.innerHTML = '<option value="">-- Pilih Kelas --</option>' + 
-            data.kelas.map(k => `<option value="${k.nama}">${k.nama}</option>`).join('');
+        sel.innerHTML = '<option value="">-- Pilih Kelas --</option>' + data.kelas.map(k => `<option value="${k.nama}">${k.nama}</option>`).join('');
     } else if (mode === 'guru') {
-        sel.innerHTML = '<option value="">-- Pilih Guru --</option>' + 
-            data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
+        sel.innerHTML = '<option value="">-- Pilih Guru --</option>' + data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
     }
-    
     renderMatrix();
 }
 
@@ -804,17 +635,13 @@ function renderMatrix() {
     const val = document.getElementById('matrixSelect').value;
     
     if (!val) {
-        document.getElementById('matrixResult').innerHTML = 
-            '<div class="alert alert-info">Silakan pilih ' + 
-            (mode === 'kelas' ? 'kelas' : 'guru') + ' untuk melihat matriks jadwal.</div>';
+        document.getElementById('matrixResult').innerHTML = '<div class="alert alert-info">Silakan pilih ' + (mode === 'kelas' ? 'kelas' : 'guru') + ' untuk melihat matriks jadwal.</div>';
         return;
     }
     
     const hari = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
     const jam = [1,2,3,4,5,6,7,8,9,10];
-    
-    let filtered = [];
-    let title = '';
+    let filtered = [], title = '';
     
     if (mode === 'kelas') {
         filtered = data.jadwal.filter(j => j.kelas === val);
@@ -838,22 +665,15 @@ function renderMatrix() {
             if (cell) {
                 const m = data.mapel.find(x => x.kode === cell.mapel);
                 const g = data.guru.find(x => x.nip === cell.guru);
-                const k = data.kelas.find(x => x.nama === cell.kelas);
                 
                 let label = '';
                 if (mode === 'kelas') {
-                    label = `<strong>${m ? m.nama : cell.mapel}</strong><br>
-                             <small style="color:#666;">${g ? g.nama : ''}</small><br>
-                             <small style="color:#999;">${cell.ruang}</small>`;
+                    label = `<strong>${m ? m.nama : cell.mapel}</strong><br><small style="color:#666;">${g ? g.nama : ''}</small><br><small style="color:#999;">${cell.ruang}</small>`;
                 } else {
-                    label = `<strong>${cell.kelas}</strong><br>
-                             <small style="color:#666;">${m ? m.nama : cell.mapel}</small><br>
-                             <small style="color:#999;">${cell.ruang}</small>`;
+                    label = `<strong>${cell.kelas}</strong><br><small style="color:#666;">${m ? m.nama : cell.mapel}</small><br><small style="color:#999;">${cell.ruang}</small>`;
                 }
                 
-                html += `<td style="padding:8px; background:${m ? m.warna + '22' : '#e3f2fd'}; 
-                         color:${m ? m.warna : '#1565c0'}; border:1px solid #ddd; 
-                         vertical-align:top; font-size:11px;">${label}</td>`;
+                html += `<td style="padding:8px; background:${m ? m.warna + '22' : '#e3f2fd'}; color:${m ? m.warna : '#1565c0'}; border:1px solid #ddd; vertical-align:top; font-size:11px;">${label}</td>`;
             } else {
                 html += '<td style="padding:8px; border:1px solid #ddd; text-align:center; color:#ccc;">-</td>';
             }
@@ -862,7 +682,9 @@ function renderMatrix() {
     });
     html += '</tbody></table>';
     document.getElementById('matrixResult').innerHTML = html;
-}// ========== STATISTIK ==========
+}
+
+// ========== 10. STATISTIK & UTILS ==========
 function updateStats() {
     document.getElementById('statGuru').innerText = data.guru.length;
     document.getElementById('statKelas').innerText = data.kelas.length;
@@ -878,13 +700,11 @@ function updateStats() {
     document.getElementById('statBentrok').innerText = bentrok / 2;
 }
 
-// ========== EXPORT/IMPORT ==========
 function exportData() {
     const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `sijab-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.href = url; a.download = `sijab-backup-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
 }
 
@@ -896,10 +716,7 @@ function importData(e) {
         try {
             const imported = JSON.parse(ev.target.result);
             if (confirm('Import akan menimpa data saat ini. Lanjutkan?')) {
-                data = imported;
-                save();
-                renderAll();
-                alert('✅ Data berhasil diimport!');
+                data = imported; save(); renderAll(); alert('✅ Data berhasil diimport!');
             }
         } catch(err) { alert('❌ File tidak valid!'); }
     };
@@ -907,26 +724,24 @@ function importData(e) {
 }
 
 function resetAll() {
-    if (confirm('⚠️ PERINGATAN: Semua data akan dihapus permanen! Lanjutkan?')) {
-        if (confirm('Yakin? Ketik OK untuk konfirmasi.')) {
-            data = {guru:[], kelas:[], mapel:[], ruang:[], jadwal:[]};
-            save(); renderAll();
-            alert('✅ Semua data telah direset.');
-        }
+    if (confirm('⚠️ PERINGATAN: Semua data akan dihapus permanen! Lanjutkan?') && confirm('Yakin? Ketik OK untuk konfirmasi.')) {
+        data = {guru:[], kelas:[], mapel:[], ruang:[], jadwal:[]};
+        save(); renderAll(); alert('✅ Semua data telah direset.');
     }
 }
 
-// ========== INIT ==========
 function renderAll() {
     renderGuru(); renderKelas(); renderMapel(); renderRuang(); renderJadwal();
     refreshDropdowns(); updateStats();
 }
 
+// Inisialisasi Tanggal
 const hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 const bulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 const now = new Date();
 document.getElementById('currentDate').innerText = `${hari[now.getDay()]}, ${now.getDate()} ${bulan[now.getMonth()]} ${now.getFullYear()}`;
 
+// Jalankan saat load
 renderAll();
 </script>
 </body>
