@@ -787,45 +787,82 @@ function renderView() {
 function initMatrix() {
     const mode = document.getElementById('matrixMode').value;
     const sel = document.getElementById('matrixSelect');
-    if (mode === 'kelas') sel.innerHTML = data.kelas.map(k => `<option value="${k.nama}">${k.nama}</option>`).join('');
-    if (mode === 'guru') sel.innerHTML = data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
+    
+    if (mode === 'kelas') {
+        sel.innerHTML = '<option value="">-- Pilih Kelas --</option>' + 
+            data.kelas.map(k => `<option value="${k.nama}">${k.nama}</option>`).join('');
+    } else if (mode === 'guru') {
+        sel.innerHTML = '<option value="">-- Pilih Guru --</option>' + 
+            data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
+    }
+    
     renderMatrix();
 }
 
 function renderMatrix() {
     const mode = document.getElementById('matrixMode').value;
     const val = document.getElementById('matrixSelect').value;
-    if (!val) return;
+    
+    if (!val) {
+        document.getElementById('matrixResult').innerHTML = 
+            '<div class="alert alert-info">Silakan pilih ' + 
+            (mode === 'kelas' ? 'kelas' : 'guru') + ' untuk melihat matriks jadwal.</div>';
+        return;
+    }
     
     const hari = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
     const jam = [1,2,3,4,5,6,7,8,9,10];
     
-    let filtered = mode === 'kelas' ? data.jadwal.filter(j => j.kelas === val) : data.jadwal.filter(j => j.guru === val);
+    let filtered = [];
+    let title = '';
     
-    let html = '<table class="matrix-table" style="border-collapse:collapse;"><thead><tr><th>Jam / Hari</th>';
-    hari.forEach(h => html += `<th>${h}</th>`);
+    if (mode === 'kelas') {
+        filtered = data.jadwal.filter(j => j.kelas === val);
+        title = `Matriks Jadwal Kelas: ${val}`;
+    } else {
+        filtered = data.jadwal.filter(j => j.guru === val);
+        const guru = data.guru.find(g => g.nip === val);
+        title = `Matriks Jadwal Mengajar: ${guru ? guru.nama : val}`;
+    }
+    
+    let html = `<h3 style="color:#1e3c72; margin-bottom:15px;">${title}</h3>`;
+    html += '<table class="matrix-table" style="border-collapse:collapse; width:100%;">';
+    html += '<thead><tr style="background:#1e3c72; color:white;"><th>Jam / Hari</th>';
+    hari.forEach(h => html += `<th style="padding:10px;">${h}</th>`);
     html += '</tr></thead><tbody>';
     
     jam.forEach(j => {
-        html += `<tr><th style="background:#1e3c72;color:white;">Jam ${j}</th>`;
+        html += `<tr style="background:#f0f2f5;"><th style="padding:8px; text-align:left;">Jam ${j}</th>`;
         hari.forEach(h => {
-            const cell = filtered.find(x => x.hari === h && x.jam == j);
+            const cell = filtered.find(x => x.hari === h && parseInt(x.jam) === j);
             if (cell) {
                 const m = data.mapel.find(x => x.kode === cell.mapel);
                 const g = data.guru.find(x => x.nip === cell.guru);
-                const label = mode === 'kelas' ? `${m?m.nama:cell.mapel}<br><small>${g?g.nama:''}</small>` : `${cell.kelas}<br><small>${m?m.nama:cell.mapel}</small>`;
-                html += `<td class="filled" style="background:${m?m.warna+'22':'#e3f2fd'};color:${m?m.warna:'#1565c0'};">${label}</td>`;
+                const k = data.kelas.find(x => x.nama === cell.kelas);
+                
+                let label = '';
+                if (mode === 'kelas') {
+                    label = `<strong>${m ? m.nama : cell.mapel}</strong><br>
+                             <small style="color:#666;">${g ? g.nama : ''}</small><br>
+                             <small style="color:#999;">${cell.ruang}</small>`;
+                } else {
+                    label = `<strong>${cell.kelas}</strong><br>
+                             <small style="color:#666;">${m ? m.nama : cell.mapel}</small><br>
+                             <small style="color:#999;">${cell.ruang}</small>`;
+                }
+                
+                html += `<td style="padding:8px; background:${m ? m.warna + '22' : '#e3f2fd'}; 
+                         color:${m ? m.warna : '#1565c0'}; border:1px solid #ddd; 
+                         vertical-align:top; font-size:11px;">${label}</td>`;
             } else {
-                html += '<td>-</td>';
+                html += '<td style="padding:8px; border:1px solid #ddd; text-align:center; color:#ccc;">-</td>';
             }
         });
         html += '</tr>';
     });
     html += '</tbody></table>';
     document.getElementById('matrixResult').innerHTML = html;
-}
-
-// ========== STATISTIK ==========
+}// ========== STATISTIK ==========
 function updateStats() {
     document.getElementById('statGuru').innerText = data.guru.length;
     document.getElementById('statKelas').innerText = data.kelas.length;
