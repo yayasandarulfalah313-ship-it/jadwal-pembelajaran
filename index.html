@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SiJAB - Sistem Jadwal Pembelajaran Anti-Bentrok</title>
+<title>SiJAB - Sistem Jadwal Anti-Bentrok</title>
+<!-- Library untuk Download PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 /* --- RESET & BASIC --- */
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -42,8 +44,6 @@ body { background: #f0f2f5; color: #333; }
 .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #555; }
 .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; transition: 0.3s; }
 .form-group input:focus, .form-group select:focus { outline: none; border-color: #2a5298; box-shadow: 0 0 0 3px rgba(42,82,152,0.1); }
-
-/* Multi-select styling */
 .form-group select[multiple] { height: auto; min-height: 110px; padding: 5px; }
 .form-group select[multiple] option { padding: 8px; border-radius: 4px; margin-bottom: 2px; cursor: pointer; }
 .form-group select[multiple] option:checked { background: #2a5298; color: white; }
@@ -73,6 +73,8 @@ table tr:hover { background: #f9f9f9; }
 .tabs { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 2px solid #eee; }
 .tab { padding: 10px 20px; cursor: pointer; border-bottom: 3px solid transparent; font-weight: 600; color: #666; }
 .tab.active { color: #2a5298; border-bottom-color: #2a5298; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
 .alert { padding: 12px 18px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; }
 .alert-success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
 .alert-danger { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
@@ -95,6 +97,56 @@ table tr:hover { background: #f9f9f9; }
     .panel { box-shadow: none; page-break-inside: avoid; }
     body { background: white; }
 }
+
+/* ========================================= */
+/* --- CSS KHUSUS UNTUK CETAK PDF (aSc Style) --- */
+/* ========================================= */
+#areaCetakPDF {
+    background: white;
+    padding: 30px;
+    font-family: Arial, sans-serif;
+    display: none;
+    width: 100%;
+}
+.asc-header { text-align: center; margin-bottom: 25px; }
+.asc-header h2 { font-size: 20px; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; color: #000; }
+.asc-header p { font-size: 13px; color: #333; }
+
+.asc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 30px;
+}
+.asc-table th, .asc-table td {
+    border: 1px solid #000;
+    padding: 8px 6px;
+    text-align: center;
+    vertical-align: middle;
+}
+.asc-table th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+    color: #000;
+}
+.asc-table .jam-header { font-size: 11px; line-height: 1.3; }
+.asc-table .hari-col { font-weight: bold; background-color: #f9f9f9; width: 90px; text-align: left; padding-left: 10px; }
+.asc-table .cell-content { font-weight: bold; color: #1e3c72; font-size: 13px; }
+.asc-table .cell-sub { font-size: 10px; color: #555; display: block; margin-top: 3px; }
+
+.asc-footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: bold;
+}
+.asc-footer .teacher-line {
+    margin-top: 35px;
+    text-align: left;
+    padding-left: 30px;
+    font-weight: normal;
+    font-size: 14px;
+}
 </style>
 </head>
 <body>
@@ -109,8 +161,9 @@ table tr:hover { background: #f9f9f9; }
             <li onclick="showPage('input', this)"><span class="icon">✏️</span> Input Jadwal</li>
             <li onclick="showPage('view', this)"><span class="icon">👁️</span> Lihat Jadwal</li>
             <li onclick="showPage('matrix', this)"><span class="icon">📅</span> Matriks Jadwal</li>
+            <li onclick="showPage('cetak', this)"><span class="icon">️</span> Cetak Roster PDF</li>
             <li onclick="showPage('settings', this)"><span class="icon">⚙️</span> Pengaturan</li>
-        </td>
+        </ul>
     </aside>
 
     <!-- MAIN CONTENT -->
@@ -132,12 +185,12 @@ table tr:hover { background: #f9f9f9; }
                 <h3>📋 Ringkasan Sistem</h3>
                 <div class="alert alert-info">
                     <strong>Selamat datang di SiJAB!</strong><br>
-                    Sistem ini membantu menyusun jadwal tanpa bentrok. Validasi otomatis mengecek bentrok pada <strong>Guru</strong>, <strong>Kelas</strong>, dan <strong>Ruangan</strong>.
+                    Sistem ini membantu menyusun jadwal tanpa bentrok dengan format keluaran mirip <strong>aSc Timetables</strong> yang siap diunduh sebagai PDF.
                 </div>
                 <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
                     <li>Lengkapi <strong>Data Master</strong> (Guru, Kelas, Mapel, Ruangan)</li>
                     <li>Masukkan jadwal melalui menu <strong>Input Jadwal</strong></li>
-                    <li>Lihat hasil di menu <strong>Lihat Jadwal</strong> atau <strong>Matriks Jadwal</strong></li>
+                    <li>Unduh Roster Guru dalam format PDF melalui menu <strong>Cetak Roster PDF</strong></li>
                 </ol>
             </div>
         </div>
@@ -152,8 +205,7 @@ table tr:hover { background: #f9f9f9; }
                     <div class="tab" onclick="showTab('tabRuang', this)">🚪 Ruangan</div>
                 </div>
 
-                <!-- TAB GURU -->
-                <div id="tabGuru" class="tab-content">
+                <div id="tabGuru" class="tab-content active">
                     <h3 id="formGuruTitle">Tambah Guru</h3>
                     <div class="form-grid">
                         <div class="form-group"><label>NIP</label><input type="text" id="guruNip" placeholder="NIP Guru"></div>
@@ -169,8 +221,7 @@ table tr:hover { background: #f9f9f9; }
                     <table><thead><tr><th>NIP</th><th>Nama</th><th>Bidang Studi</th><th>Aksi</th></tr></thead><tbody id="tblGuru"></tbody></table>
                 </div>
 
-                <!-- TAB KELAS -->
-                <div id="tabKelas" class="tab-content" style="display:none;">
+                <div id="tabKelas" class="tab-content">
                     <h3>Tambah Kelas</h3>
                     <div class="form-grid">
                         <div class="form-group"><label>Nama Kelas</label><input type="text" id="kelasNama" placeholder="Contoh: X IPA 1"></div>
@@ -182,8 +233,7 @@ table tr:hover { background: #f9f9f9; }
                     <table><thead><tr><th>Nama Kelas</th><th>Wali Kelas</th><th>Kapasitas</th><th>Aksi</th></tr></thead><tbody id="tblKelas"></tbody></table>
                 </div>
 
-                <!-- TAB MAPEL -->
-                <div id="tabMapel" class="tab-content" style="display:none;">
+                <div id="tabMapel" class="tab-content">
                     <h3>Tambah Mata Pelajaran</h3>
                     <div class="form-grid">
                         <div class="form-group"><label>Kode Mapel</label><input type="text" id="mapelKode" placeholder="MTK, BIN"></div>
@@ -195,8 +245,7 @@ table tr:hover { background: #f9f9f9; }
                     <table><thead><tr><th>Kode</th><th>Nama</th><th>Warna</th><th>Aksi</th></tr></thead><tbody id="tblMapel"></tbody></table>
                 </div>
 
-                <!-- TAB RUANGAN -->
-                <div id="tabRuang" class="tab-content" style="display:none;">
+                <div id="tabRuang" class="tab-content">
                     <h3>Tambah Ruangan</h3>
                     <div class="form-grid">
                         <div class="form-group"><label>Kode Ruangan</label><input type="text" id="ruangKode" placeholder="R101, LAB1"></div>
@@ -224,15 +273,20 @@ table tr:hover { background: #f9f9f9; }
                     <div class="form-group"><label>Hari</label>
                         <select id="jHari">
                             <option>Senin</option><option>Selasa</option><option>Rabu</option>
-                            <option>Kamis</option><option>Jumat</option><option>Sabtu</option>
+                            <option>Kamis</option><option>Jumat</option><option>Sabtu</option><option>Ahad</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Jam Ke- <small style="color:#f44336;">*(Tahan Ctrl/Cmd untuk pilih >1)*</small></label>
-                        <select id="jJam" multiple size="4">
-                            <option value="1">Jam 1</option><option value="2">Jam 2</option><option value="3">Jam 3</option>
-                            <option value="4">Jam 4</option><option value="5">Jam 5</option><option value="6">Jam 6</option>
-                            <option value="7">Jam 7</option><option value="8">Jam 8</option><option value="9">Jam 9</option><option value="10">Jam 10</option>
+                        <label>Jam Pelajaran <small style="color:#f44336;">*(Tahan Ctrl/Cmd untuk pilih >1)*</small></label>
+                        <select id="jJam" multiple size="5">
+                            <option value="1">1 (7:30 - 8:10)</option>
+                            <option value="2">2 (8:10 - 8:50)</option>
+                            <option value="3">3 (8:50 - 9:30)</option>
+                            <option value="4">4 (9:30 - 10:10)</option>
+                            <option value="5">5 (10:20 - 11:00)</option>
+                            <option value="6">6 (11:00 - 11:40)</option>
+                            <option value="7">7 (11:40 - 12:20)</option>
+                            <option value="8">8 (12:40 - 13:20)</option>
                         </select>
                     </div>
                 </div>
@@ -261,7 +315,7 @@ table tr:hover { background: #f9f9f9; }
                     </div>
                     <div class="form-group"><label>Pilih</label><select id="viewSelect" onchange="renderView()"></select></div>
                 </div>
-                <button class="btn btn-primary no-print" onclick="window.print()">🖨️ Cetak Jadwal</button>
+                <button class="btn btn-primary no-print" onclick="window.print()">️ Cetak Jadwal</button>
                 <div id="viewResult" style="margin-top:20px;"></div>
             </div>
         </div>
@@ -281,6 +335,42 @@ table tr:hover { background: #f9f9f9; }
                 </div>
                 <button class="btn btn-primary no-print" onclick="window.print()">🖨️ Cetak Matriks</button>
                 <div id="matrixResult" style="margin-top:20px; overflow-x:auto;"></div>
+            </div>
+        </div>
+
+        <!-- CETAK ROSTER PDF -->
+        <div id="cetak" class="page">
+            <div class="panel">
+                <h3>🖨️ Cetak Roster Guru (Format aSc Timetables)</h3>
+                <div class="alert alert-info">Pilih guru untuk melihat preview roster, lalu download sebagai PDF.</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Pilih Guru untuk dicetak Roster-nya:</label>
+                        <select id="cetakGuruSelect" onchange="previewRoster()">
+                            <option value="">-- Pilih Guru --</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="downloadPDF()" id="btnDownloadPDF" disabled>📥 Download Roster sebagai PDF</button>
+                
+                <hr style="margin: 25px 0; border: 0; border-top: 1px solid #eee;">
+                
+                <!-- AREA YANG AKAN DICETAK MENJADI PDF -->
+                <div id="areaCetakPDF">
+                    <div class="asc-header">
+                        <h2>GURU PON-PES DDI MATTOANGING</h2>
+                        <p>Menghasilkan jadwal: <span id="tglCetak"></span> aSc Timetables</p>
+                    </div>
+                    <table class="asc-table" id="tabelRosterCetak">
+                        <!-- Diisi oleh JavaScript -->
+                    </table>
+                    <div class="asc-footer">
+                        <p>ROSTER GURU PON-PES DDI MATTOANGING TAHUN PELAJARAN 2026-2027</p>
+                        <div class="teacher-line">
+                            Teacher: <span id="namaGuruCetak" style="text-decoration: underline; font-weight: bold;">...................................................</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -306,7 +396,13 @@ table tr:hover { background: #f9f9f9; }
 <!-- SEMUA JAVASCRIPT BERADA DI DALAM TAG INI -->
 <!-- ========================================== -->
 <script>
-// ========== 1. DATA STORE ==========
+// ========== 1. DATA STORE & CONFIG ==========
+const waktuMap = {
+    '1': '7:30-8:10', '2': '8:10-8:50', '3': '8:50-9:30', '4': '9:30-10:10',
+    '5': '10:20-11:00', '6': '11:00-11:40', '7': '11:40-12:20', '8': '12:40-13:20'
+};
+const hariList = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Ahad'];
+
 let data = {
     guru: JSON.parse(localStorage.getItem('guru') || '[]'),
     kelas: JSON.parse(localStorage.getItem('kelas') || '[]'),
@@ -326,16 +422,19 @@ function showPage(id, el) {
     document.getElementById(id).classList.add('active');
     document.querySelectorAll('.menu li').forEach(m => m.classList.remove('active'));
     el.classList.add('active');
-    const titles = {dashboard:'📊 Dashboard', master:'🗂️ Data Master', input:'✏️ Input Jadwal', view:'👁️ Lihat Jadwal', matrix:'📅 Matriks Jadwal', settings:'⚙️ Pengaturan'};
+    const titles = {
+        dashboard:'📊 Dashboard', master:'🗂️ Data Master', input:'✏️ Input Jadwal',
+        view:'️ Lihat Jadwal', matrix:'📅 Matriks Jadwal', cetak:'🖨️ Cetak Roster PDF', settings:'⚙️ Pengaturan'
+    };
     document.getElementById('pageTitle').innerText = titles[id];
     if (id === 'view') initView();
     if (id === 'matrix') initMatrix();
-    if (id === 'input') refreshDropdowns();
+    if (id === 'input' || id === 'cetak') refreshDropdowns();
 }
 
 function showTab(id, el) {
-    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-    document.getElementById(id).style.display = 'block';
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
 }
@@ -373,7 +472,7 @@ function tambahGuru() {
     const mapel = Array.from(mapelSelect.selectedOptions).map(option => option.value);
     
     if (!nip || !nama) return alert('Lengkapi NIP dan Nama Guru!');
-    if (mapel.length === 0) return alert('⚠️ Pilih minimal 1 Mata Pelajaran!');
+    if (mapel.length === 0) return alert('️ Pilih minimal 1 Mata Pelajaran!');
     if (data.guru.find(g => g.nip === nip)) return alert('NIP sudah terdaftar!');
     
     data.guru.push({nip, nama, mapel});
@@ -386,7 +485,7 @@ function editGuru(nip) {
     if (!guru) return;
 
     document.getElementById('guruNip').value = guru.nip;
-    document.getElementById('guruNip').readOnly = true; // Kunci NIP saat edit
+    document.getElementById('guruNip').readOnly = true;
     document.getElementById('guruNama').value = guru.nama;
     document.getElementById('formGuruTitle').innerText = 'Edit Data Guru';
 
@@ -413,7 +512,7 @@ function updateGuru() {
     const mapel = Array.from(mapelSelect.selectedOptions).map(option => option.value);
 
     if (!nip || !nama) return alert('Lengkapi NIP dan Nama Guru!');
-    if (mapel.length === 0) return alert('⚠️ Pilih minimal 1 Mata Pelajaran!');
+    if (mapel.length === 0) return alert('️ Pilih minimal 1 Mata Pelajaran!');
 
     const index = data.guru.findIndex(g => g.nip === nip);
     if (index !== -1) {
@@ -434,6 +533,7 @@ function resetFormGuru() {
     btnSimpan.innerText = '+ Tambah Guru';
     btnSimpan.className = 'btn btn-success';
     btnSimpan.setAttribute('onclick', 'tambahGuru()');
+
     document.getElementById('btnBatalGuru').style.display = 'none';
 }
 
@@ -452,7 +552,7 @@ function renderGuru() {
             <td>${badges}</td>
             <td>
                 <button class="btn btn-primary btn-sm" onclick="editGuru('${g.nip}')">✏️ Edit</button>
-                <button class="btn btn-danger btn-sm" onclick="hapusGuru(${i})">🗑️ Hapus</button>
+                <button class="btn btn-danger btn-sm" onclick="hapusGuru(${i})">️ Hapus</button>
             </td>
         </tr>`;
     }).join('') || '<tr><td colspan="4" style="text-align:center;color:#999;">Belum ada data</td></tr>';
@@ -511,6 +611,9 @@ function refreshDropdowns() {
     document.getElementById('jMapel').innerHTML = '<option value="">-- Pilih Mapel --</option>' + data.mapel.map(m => `<option value="${m.kode}">${m.nama}</option>`).join('');
     document.getElementById('jKelas').innerHTML = '<option value="">-- Pilih Kelas --</option>' + data.kelas.map(k => `<option value="${k.nama}">${k.nama}</option>`).join('');
     document.getElementById('jRuang').innerHTML = '<option value="">-- Pilih Ruangan --</option>' + data.ruang.map(r => `<option value="${r.kode}">${r.nama}</option>`).join('');
+    
+    // Dropdown Cetak Roster
+    document.getElementById('cetakGuruSelect').innerHTML = '<option value="">-- Pilih Guru --</option>' + data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
 }
 
 // ========== 7. JADWAL (ANTI-BENTROK MULTI-JAM) ==========
@@ -529,7 +632,6 @@ function tambahJadwal() {
 
     jams.sort((a, b) => parseInt(a) - parseInt(b));
 
-    // CEK BENTROK UNTUK SEMUA JAM YANG DIPILIH
     for (let jam of jams) {
         if (data.jadwal.find(j => j.guru === guru && j.hari === hari && j.jam === jam)) {
             const g = data.guru.find(x => x.nip === guru);
@@ -543,7 +645,6 @@ function tambahJadwal() {
         }
     }
 
-    // SIMPAN SEMUA JAM
     const baseId = Date.now();
     for (let i = 0; i < jams.length; i++) {
         data.jadwal.push({ guru, mapel, kelas, ruang, hari, jam: jams[i], id: baseId + i });
@@ -562,14 +663,13 @@ function resetFormJadwal() {
 
 function renderJadwal() {
     const tbody = document.getElementById('tblJadwal');
-    const urutanHari = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-    const sorted = [...data.jadwal].sort((a,b) => urutanHari.indexOf(a.hari) - urutanHari.indexOf(b.hari) || a.jam - b.jam);
+    const sorted = [...data.jadwal].sort((a,b) => hariList.indexOf(a.hari) - hariList.indexOf(b.hari) || a.jam - b.jam);
     
     tbody.innerHTML = sorted.map(j => {
         const g = data.guru.find(x => x.nip === j.guru);
         const m = data.mapel.find(x => x.kode === j.mapel);
         return `<tr>
-            <td><strong>${j.hari}</strong></td><td>Jam ${j.jam}</td><td>${j.kelas}</td>
+            <td><strong>${j.hari}</strong></td><td>${j.jam} (${waktuMap[j.jam]})</td><td>${j.kelas}</td>
             <td><span class="badge" style="background:${m?m.warna:'#ccc'}">${m?m.nama:j.mapel}</span></td>
             <td>${g ? g.nama : '-'}</td><td>${j.ruang}</td>
             <td><span class="badge badge-success">✓ Valid</span></td>
@@ -601,15 +701,14 @@ function renderView() {
     if (mode === 'guru') { filtered = data.jadwal.filter(j => j.guru === val); const g = data.guru.find(x=>x.nip===val); title = `Jadwal Mengajar: ${g?g.nama:val}`; }
     if (mode === 'ruang') { filtered = data.jadwal.filter(j => j.ruang === val); title = `Jadwal Ruangan: ${val}`; }
 
-    const urutanHari = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-    filtered.sort((a,b) => urutanHari.indexOf(a.hari) - urutanHari.indexOf(b.hari) || a.jam - b.jam);
+    filtered.sort((a,b) => hariList.indexOf(a.hari) - hariList.indexOf(b.hari) || a.jam - b.jam);
 
     let html = `<h3 style="color:#1e3c72;">${title}</h3><table><thead><tr><th>Hari</th><th>Jam</th><th>Kelas</th><th>Mapel</th><th>Guru</th><th>Ruangan</th></tr></thead><tbody>`;
     if (filtered.length === 0) html += '<tr><td colspan="6" style="text-align:center;color:#999;">Tidak ada jadwal</td></tr>';
     filtered.forEach(j => {
         const g = data.guru.find(x => x.nip === j.guru);
         const m = data.mapel.find(x => x.kode === j.mapel);
-        html += `<tr><td><strong>${j.hari}</strong></td><td>Jam ${j.jam}</td><td>${j.kelas}</td>
+        html += `<tr><td><strong>${j.hari}</strong></td><td>${j.jam} (${waktuMap[j.jam]})</td><td>${j.kelas}</td>
         <td><span class="badge" style="background:${m?m.warna:'#ccc'}">${m?m.nama:j.mapel}</span></td>
         <td>${g?g.nama:'-'}</td><td>${j.ruang}</td></tr>`;
     });
@@ -617,7 +716,7 @@ function renderView() {
     document.getElementById('viewResult').innerHTML = html;
 }
 
-// ========== 9. MATRIKS JADWAL (DIPERBAIKI) ==========
+// ========== 9. MATRIKS JADWAL ==========
 function initMatrix() {
     const mode = document.getElementById('matrixMode').value;
     const sel = document.getElementById('matrixSelect');
@@ -639,8 +738,7 @@ function renderMatrix() {
         return;
     }
     
-    const hari = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-    const jam = [1,2,3,4,5,6,7,8,9,10];
+    const jam = [1,2,3,4,5,6,7,8];
     let filtered = [], title = '';
     
     if (mode === 'kelas') {
@@ -655,12 +753,12 @@ function renderMatrix() {
     let html = `<h3 style="color:#1e3c72; margin-bottom:15px;">${title}</h3>`;
     html += '<table class="matrix-table" style="border-collapse:collapse; width:100%;">';
     html += '<thead><tr style="background:#1e3c72; color:white;"><th>Jam / Hari</th>';
-    hari.forEach(h => html += `<th style="padding:10px;">${h}</th>`);
+    hariList.forEach(h => html += `<th style="padding:10px;">${h}</th>`);
     html += '</tr></thead><tbody>';
     
     jam.forEach(j => {
-        html += `<tr style="background:#f0f2f5;"><th style="padding:8px; text-align:left;">Jam ${j}</th>`;
-        hari.forEach(h => {
+        html += `<tr style="background:#f0f2f5;"><th style="padding:8px; text-align:left;">Jam ${j}<br><small>${waktuMap[j]}</small></th>`;
+        hariList.forEach(h => {
             const cell = filtered.find(x => x.hari === h && parseInt(x.jam) === j);
             if (cell) {
                 const m = data.mapel.find(x => x.kode === cell.mapel);
@@ -684,7 +782,77 @@ function renderMatrix() {
     document.getElementById('matrixResult').innerHTML = html;
 }
 
-// ========== 10. STATISTIK & UTILS ==========
+// ========== 10. CETAK ROSTER PDF (aSc Style) ==========
+function previewRoster() {
+    const nip = document.getElementById('cetakGuruSelect').value;
+    const btn = document.getElementById('btnDownloadPDF');
+    const tabel = document.getElementById('tabelRosterCetak');
+    
+    if (!nip) {
+        tabel.innerHTML = '';
+        btn.disabled = true;
+        document.getElementById('namaGuruCetak').innerText = '...................................................';
+        return;
+    }
+
+    btn.disabled = false;
+    const guru = data.guru.find(g => g.nip === nip);
+    document.getElementById('namaGuruCetak').innerText = guru.nama;
+    
+    const now = new Date();
+    document.getElementById('tglCetak').innerText = `${now.getMonth()+1}/${now.getDate()}/${now.getFullYear()}`;
+
+    const jadwalGuru = data.jadwal.filter(j => j.guru === nip).sort((a,b) => hariList.indexOf(a.hari) - hariList.indexOf(b.hari) || a.jam - b.jam);
+
+    let html = '<thead><tr><th class="hari-col">Hari</th>';
+    for (let i = 1; i <= 8; i++) {
+        html += `<th class="jam-header">${i}<br>${waktuMap[i]}</th>`;
+    }
+    html += '</tr></thead><tbody>';
+
+    hariList.forEach(hari => {
+        html += `<tr><td class="hari-col">${hari}</td>`;
+        for (let j = 1; j <= 8; j++) {
+            const cell = jadwalGuru.find(x => x.hari === hari && x.jam == j);
+            if (cell) {
+                const m = data.mapel.find(x => x.kode === cell.mapel);
+                const k = data.kelas.find(x => x.nama === cell.kelas);
+                html += `<td>
+                    <div class="cell-content">${m ? m.nama : cell.mapel}</div>
+                    <span class="cell-sub">${k ? k.nama : cell.kelas}</span>
+                    <span class="cell-sub">${cell.ruang}</span>
+                </td>`;
+            } else {
+                html += '<td></td>';
+            }
+        }
+        html += '</tr>';
+    });
+    html += '</tbody>';
+    tabel.innerHTML = html;
+}
+
+function downloadPDF() {
+    const element = document.getElementById('areaCetakPDF');
+    const guru = data.guru.find(g => g.nip === document.getElementById('cetakGuruSelect').value);
+    
+    // Tampilkan sementara untuk di-capture oleh html2pdf
+    element.style.display = 'block';
+    
+    const opt = {
+        margin: 10,
+        filename: `Roster_${guru.nama.replace(/\s+/g, '_')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    };
+
+    html2pdf().set(opt).from(element).save().then(() => {
+        element.style.display = 'none'; // Sembunyikan lagi setelah download
+    });
+}
+
+// ========== 11. STATISTIK & UTILS ==========
 function updateStats() {
     document.getElementById('statGuru').innerText = data.guru.length;
     document.getElementById('statKelas').innerText = data.kelas.length;
