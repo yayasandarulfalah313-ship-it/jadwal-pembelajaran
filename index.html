@@ -308,26 +308,86 @@ table tr:hover { background: #f9f9f9; }
             </div>
         </div>
 
-        <!-- MATRIKS JADWAL -->
-        <div id="matrix" class="page">
-            <div class="panel">
-                <h3>📅 Matriks Jadwal Keseluruhan</h3>
-                <div class="form-grid">
-                    <div class="form-group"><label>Lihat Matriks Untuk</label>
-                        <select id="matrixMode" onchange="renderMatrix()">
-                            <option value="kelas">Kelas</option>
-                            <option value="guru">Guru</option>
-                        </select>
-                    </div>
-                    <div class="form-group"><label>Pilih</label>
-                        <select id="matrixSelect" onchange="renderMatrix()"></select>
-                    </div>
-                </div>
-                <button class="btn btn-primary" onclick="window.print()">🖨️ Cetak Matriks</button>
-                <div id="matrixResult" style="margin-top:20px; overflow-x:auto;"></div>
-            </div>
-        </div>
+// ========== MATRIKS JADWAL ==========
+function initMatrix() {
+    const mode = document.getElementById('matrixMode').value;
+    const sel = document.getElementById('matrixSelect');
+    
+    if (mode === 'kelas') {
+        sel.innerHTML = '<option value="">-- Pilih Kelas --</option>' + 
+            data.kelas.map(k => `<option value="${k.nama}">${k.nama}</option>`).join('');
+    } else if (mode === 'guru') {
+        sel.innerHTML = '<option value="">-- Pilih Guru --</option>' + 
+            data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
+    }
+    
+    renderMatrix();
+}
 
+function renderMatrix() {
+    const mode = document.getElementById('matrixMode').value;
+    const val = document.getElementById('matrixSelect').value;
+    
+    if (!val) {
+        document.getElementById('matrixResult').innerHTML = 
+            '<div class="alert alert-info">Silakan pilih ' + 
+            (mode === 'kelas' ? 'kelas' : 'guru') + ' untuk melihat matriks jadwal.</div>';
+        return;
+    }
+    
+    const hari = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+    const jam = [1,2,3,4,5,6,7,8,9,10];
+    
+    let filtered = [];
+    let title = '';
+    
+    if (mode === 'kelas') {
+        filtered = data.jadwal.filter(j => j.kelas === val);
+        title = `Matriks Jadwal Kelas: ${val}`;
+    } else {
+        filtered = data.jadwal.filter(j => j.guru === val);
+        const guru = data.guru.find(g => g.nip === val);
+        title = `Matriks Jadwal Mengajar: ${guru ? guru.nama : val}`;
+    }
+    
+    let html = `<h3 style="color:#1e3c72; margin-bottom:15px;">${title}</h3>`;
+    html += '<table class="matrix-table" style="border-collapse:collapse; width:100%;">';
+    html += '<thead><tr style="background:#1e3c72; color:white;"><th>Jam / Hari</th>';
+    hari.forEach(h => html += `<th style="padding:10px;">${h}</th>`);
+    html += '</tr></thead><tbody>';
+    
+    jam.forEach(j => {
+        html += `<tr style="background:#f0f2f5;"><th style="padding:8px; text-align:left;">Jam ${j}</th>`;
+        hari.forEach(h => {
+            const cell = filtered.find(x => x.hari === h && parseInt(x.jam) === j);
+            if (cell) {
+                const m = data.mapel.find(x => x.kode === cell.mapel);
+                const g = data.guru.find(x => x.nip === cell.guru);
+                const k = data.kelas.find(x => x.nama === cell.kelas);
+                
+                let label = '';
+                if (mode === 'kelas') {
+                    label = `<strong>${m ? m.nama : cell.mapel}</strong><br>
+                             <small style="color:#666;">${g ? g.nama : ''}</small><br>
+                             <small style="color:#999;">${cell.ruang}</small>`;
+                } else {
+                    label = `<strong>${cell.kelas}</strong><br>
+                             <small style="color:#666;">${m ? m.nama : cell.mapel}</small><br>
+                             <small style="color:#999;">${cell.ruang}</small>`;
+                }
+                
+                html += `<td style="padding:8px; background:${m ? m.warna + '22' : '#e3f2fd'}; 
+                         color:${m ? m.warna : '#1565c0'}; border:1px solid #ddd; 
+                         vertical-align:top; font-size:11px;">${label}</td>`;
+            } else {
+                html += '<td style="padding:8px; border:1px solid #ddd; text-align:center; color:#ccc;">-</td>';
+            }
+        });
+        html += '</tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('matrixResult').innerHTML = html;
+}
         <!-- SETTINGS -->
         <div id="settings" class="page">
             <div class="panel">
