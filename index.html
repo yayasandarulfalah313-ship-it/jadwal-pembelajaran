@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SiJAB - Sistem Jadwal Anti-Bentrok</title>
+<title>SiJAB - Sistem Jadwal Anti-Bentrok (SMP/MTs/MA)</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -43,12 +43,12 @@
             </div>
             <div class="panel">
                 <h3>📋 Ringkasan Sistem</h3>
-                <div class="alert alert-info"><strong>Selamat datang di SiJAB!</strong> Sistem ini membantu menyusun jadwal tanpa bentrok dengan format keluaran aSc Timetables yang siap diunduh sebagai PDF.</div>
+                <div class="alert alert-info"><strong>Selamat datang di SiJAB!</strong> Sistem ini mendukung 3 tingkatan: <strong>SMP, MTs, dan MA</strong>. Jadwal dapat dicetak per Guru maupun per Kelas.</div>
                 <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
                     <li>Upload <strong>Logo Instansi</strong> di menu Logo & Kop</li>
-                    <li>Lengkapi <strong>Data Master</strong> (Guru, Kelas, Mapel, Ruangan)</li>
-                    <li>Masukkan jadwal melalui menu <strong>Input Jadwal</strong></li>
-                    <li>Unduh Roster Guru dalam format PDF melalui menu <strong>Cetak Roster PDF</strong></li>
+                    <li>Lengkapi <strong>Data Master</strong> (Guru, Kelas + Tingkatan, Mapel, Ruangan)</li>
+                    <li>Masukkan jadwal melalui menu <strong>Input Jadwal</strong> (filter tingkatan tersedia)</li>
+                    <li>Unduh Roster <strong>Guru</strong> atau <strong>Kelas</strong> dalam format PDF</li>
                 </ol>
             </div>
         </div>
@@ -77,13 +77,20 @@
                 <div id="tabKelas" class="tab-content">
                     <h3>Tambah Kelas</h3>
                     <div class="form-grid">
-                        <div class="form-group"><label>Nama Kelas</label><input type="text" id="kelasNama" placeholder="Contoh: X IPA 1"></div>
+                        <div class="form-group"><label>Tingkatan</label>
+                            <select id="kelasTingkatan">
+                                <option value="SMP">SMP</option>
+                                <option value="MTs">MTs</option>
+                                <option value="MA">MA</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Nama Kelas</label><input type="text" id="kelasNama" placeholder="Contoh: VII A, X IPA 1"></div>
                         <div class="form-group"><label>Wali Kelas</label><select id="kelasWali"><option value="">-- Pilih Wali --</option></select></div>
                         <div class="form-group"><label>Kapasitas</label><input type="number" id="kelasKap" placeholder="Jumlah Siswa"></div>
                     </div>
                     <button class="btn btn-success" onclick="tambahKelas()">+ Tambah Kelas</button>
                     <h3 style="margin-top:25px;">Daftar Kelas</h3>
-                    <table><thead><tr><th>Nama Kelas</th><th>Wali Kelas</th><th>Kapasitas</th><th>Aksi</th></tr></thead><tbody id="tblKelas"></tbody></table>
+                    <table><thead><tr><th>Tingkatan</th><th>Nama Kelas</th><th>Wali Kelas</th><th>Kapasitas</th><th>Aksi</th></tr></thead><tbody id="tblKelas"></tbody></table>
                 </div>
                 <div id="tabMapel" class="tab-content">
                     <h3>Tambah Mata Pelajaran</h3>
@@ -117,6 +124,14 @@
                 <div class="alert alert-info">💡 Sistem akan otomatis mendeteksi bentrok pada <strong>Guru</strong>, <strong>Kelas</strong>, dan <strong>Ruangan</strong>.</div>
                 <div id="inputStatus"></div>
                 <div class="form-grid">
+                    <div class="form-group"><label>Tingkatan</label>
+                        <select id="jTingkatan" onchange="filterInputByTingkatan()">
+                            <option value="">-- Semua Tingkatan --</option>
+                            <option value="SMP">SMP</option>
+                            <option value="MTs">MTs</option>
+                            <option value="MA">MA</option>
+                        </select>
+                    </div>
                     <div class="form-group"><label>Guru</label><select id="jGuru"><option value="">-- Pilih Guru --</option></select></div>
                     <div class="form-group"><label>Mata Pelajaran</label><select id="jMapel"><option value="">-- Pilih Mapel --</option></select></div>
                     <div class="form-group"><label>Kelas</label><select id="jKelas"><option value="">-- Pilih Kelas --</option></select></div>
@@ -132,7 +147,7 @@
                 <button class="btn btn-primary" onclick="tambahJadwal()">💾 Simpan Jadwal</button>
                 <button class="btn btn-warning" onclick="resetFormJadwal()">🔄 Reset Form</button>
                 <h3 style="margin-top:30px;">📋 Daftar Jadwal</h3>
-                <table><thead><tr><th>Hari</th><th>Jam</th><th>Kelas</th><th>Mapel</th><th>Guru</th><th>Ruangan</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="tblJadwal"></tbody></table>
+                <table><thead><tr><th>Hari</th><th>Jam</th><th>Tingkatan</th><th>Kelas</th><th>Mapel</th><th>Guru</th><th>Ruangan</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="tblJadwal"></tbody></table>
             </div>
         </div>
 
@@ -165,34 +180,56 @@
         <!-- CETAK ROSTER PDF -->
         <div id="cetak" class="page">
             <div class="panel">
-                <h3>🖨️ Cetak Roster Guru (Format aSc Timetables)</h3>
-                <div class="alert alert-info">Pilih guru untuk melihat preview roster, lalu download sebagai PDF. Logo instansi akan sejajar dengan judul kop.</div>
-                <div class="form-grid">
-                    <div class="form-group"><label>Pilih Guru untuk dicetak Roster-nya:</label><select id="cetakGuruSelect" onchange="previewRoster()"><option value="">-- Pilih Guru --</option></select></div>
+                <h3>🖨️ Cetak Roster PDF (Format aSc Timetables)</h3>
+                <div class="alert alert-info">Cetak jadwal dalam format PDF. Tersedia 2 opsi: <strong>Roster Guru</strong> dan <strong>Jadwal Kelas</strong>. Logo instansi akan sejajar dengan judul kop.</div>
+                
+                <!-- TABS CETAK -->
+                <div class="tabs">
+                    <div class="tab active" onclick="showTabCetak('cetakGuru', this)">👨‍🏫 Roster Per Guru</div>
+                    <div class="tab" onclick="showTabCetak('cetakKelas', this)">🏫 Jadwal Per Kelas</div>
                 </div>
-                <button class="btn btn-primary" onclick="downloadPDF()" id="btnDownloadPDF" disabled>📥 Download Roster sebagai PDF</button>
+
+                <!-- CETAK PER GURU -->
+                <div id="cetakGuru" class="tab-content-cetak active">
+                    <div class="form-grid">
+                        <div class="form-group"><label>Pilih Guru:</label><select id="cetakGuruSelect" onchange="previewRoster()"><option value="">-- Pilih Guru --</option></select></div>
+                    </div>
+                    <button class="btn btn-primary" onclick="downloadPDF('guru')" id="btnDownloadGuru" disabled>📥 Download Roster Guru sebagai PDF</button>
+                </div>
+
+                <!-- CETAK PER KELAS -->
+                <div id="cetakKelas" class="tab-content-cetak">
+                    <div class="form-grid">
+                        <div class="form-group"><label>Pilih Tingkatan:</label>
+                            <select id="cetakTingkatanKelas" onchange="filterKelasCetak()">
+                                <option value="">-- Semua Tingkatan --</option>
+                                <option value="SMP">SMP</option>
+                                <option value="MTs">MTs</option>
+                                <option value="MA">MA</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Pilih Kelas:</label><select id="cetakKelasSelect" onchange="previewRosterKelas()"><option value="">-- Pilih Kelas --</option></select></div>
+                    </div>
+                    <button class="btn btn-primary" onclick="downloadPDF('kelas')" id="btnDownloadKelas" disabled>📥 Download Jadwal Kelas sebagai PDF</button>
+                </div>
+
                 <hr style="margin: 25px 0; border: 0; border-top: 1px solid #eee;">
                 
                 <!-- AREA YANG AKAN DICETAK -->
                 <div id="areaCetakPDF">
-                    <!-- KOP SURAT: Logo + Judul sejajar -->
                     <div class="kop-surat">
                         <img id="pdfLogo" class="kop-logo" src="" alt="Logo" style="display:none;">
                         <div class="kop-logo-placeholder" id="logoPlaceholderPDF"></div>
                         <div class="kop-text">
-                            <h2>GURU PON-PES DDI MATTOANGING</h2>
+                            <h2 id="pdfJudul">GURU PON-PES DDI MATTOANGING</h2>
                             <p>Menghasilkan jadwal: <span id="tglCetak"></span> aSc Timetables</p>
                         </div>
                         <div style="width:100px; flex-shrink:0;"></div>
                     </div>
-                    
-                    <!-- Tabel Jadwal -->
                     <table class="asc-table" id="tabelRosterCetak"></table>
-                    
-                    <!-- Footer -->
                     <div class="asc-footer">
-                        <p>ROSTER GURU PON-PES DDI MATTOANGING TAHUN PELAJARAN 2026-2027</p>
-                        <div class="teacher-line">Teacher: <span id="namaGuruCetak" style="text-decoration: underline; font-weight: bold;">...................................................</span></div>
+                        <p id="pdfFooterText">ROSTER GURU PON-PES DDI MATTOANGING TAHUN PELAJARAN 2026-2027</p>
+                        <div class="teacher-line" id="pdfTeacherLine">Teacher: <span id="namaGuruCetak" style="text-decoration: underline; font-weight: bold;">...................................................</span></div>
                     </div>
                 </div>
             </div>
