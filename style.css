@@ -110,3 +110,37 @@ table td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
 
 @media (max-width: 768px) { .sidebar { width: 100%; height: auto; position: relative; } .main { margin-left: 0; } }
 @media print { .sidebar, .btn, .header, .tabs, .no-print { display: none !important; } .main { margin: 0; padding: 0; } body { background: white; } }
+
+/* ===== PREVIEW BLOK JAM ===== */
+.jam-preview {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #f8faff;
+    font-size: 13px;
+    color: #555;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.jam-preview .chip {
+    background: #2a5298;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 14px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.jam-preview .chip-waktu {
+    background: #e3f2fd;
+    color: #1565c0;
+    font-weight: normal;
+}
+.jam-preview .chip-arrow {
+    background: transparent;
+    color: #999;
+    padding: 0;
+}
+.jam-preview.error { border-color: #dc3545; background: #f8d7da; color: #721c24; }
