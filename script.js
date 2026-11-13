@@ -12,19 +12,16 @@ let data = {
 };
 let logoSettings = JSON.parse(localStorage.getItem('logoSettings') || '{"src":"","size":100}');
 
-// Variabel untuk menyimpan mode cetak aktif
-let currentCetakMode = 'guru'; // 'guru' atau 'kelas'
+let currentCetakMode = 'guru'; 
 
 function save() { Object.keys(data).forEach(k => localStorage.setItem(k, JSON.stringify(data[k]))); updateStats(); }
 
-// Helper: hex -> rgba
 function hexToRgba(hex, a) {
     const h = hex.replace('#','');
     const r = parseInt(h.substring(0,2),16), g = parseInt(h.substring(2,4),16), b = parseInt(h.substring(4,6),16);
     return `rgba(${r},${g},${b},${a})`;
 }
 
-// Helper: cari tingkatan kelas
 function getTingkatanKelas(namaKelas) {
     const k = data.kelas.find(x => x.nama === namaKelas);
     return k ? k.tingkatan : '';
@@ -45,8 +42,10 @@ function applyLogo() {
     const preview = document.getElementById('logoPreview'), placeholder = document.getElementById('logoPlaceholder'), btnHapus = document.getElementById('btnHapusLogo');
     if (hasLogo) { preview.src = logoSettings.src; preview.style.display = 'block'; placeholder.style.display = 'none'; btnHapus.style.display = 'inline-block'; }
     else { preview.style.display = 'none'; placeholder.style.display = 'block'; btnHapus.style.display = 'none'; }
+    
     const sidebarLogo = document.getElementById('sidebarLogo');
     if (hasLogo) { sidebarLogo.src = logoSettings.src; sidebarLogo.style.display = 'block'; } else { sidebarLogo.style.display = 'none'; }
+    
     const pdfLogo = document.getElementById('pdfLogo');
     const logoPlaceholderPDF = document.getElementById('logoPlaceholderPDF');
     if (hasLogo) { 
@@ -84,13 +83,19 @@ function showTab(id, el) {
 function showTabCetak(id, el) {
     document.querySelectorAll('.tab-content-cetak').forEach(t => t.classList.remove('active'));
     document.getElementById(id).classList.add('active');
-    document.querySelectorAll('#cetak .tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('#cetak .tabs .tab').forEach(t => t.classList.remove('active')); // Fixed selector
     el.classList.add('active');
     currentCetakMode = id === 'cetakGuru' ? 'guru' : 'kelas';
-    // Reset preview
+    
+    // Reset preview dan tombol
     document.getElementById('tabelRosterCetak').innerHTML = '';
     document.getElementById('btnDownloadGuru').disabled = true;
     document.getElementById('btnDownloadKelas').disabled = true;
+    
+    // Reset teks PDF ke default agar tidak tertukar
+    document.getElementById('pdfJudul').innerText = 'GURU PON-PES DDI MATTOANGING';
+    document.getElementById('pdfFooterText').innerText = 'ROSTER GURU PON-PES DDI MATTOANGING TAHUN PELAJARAN 2026-2027';
+    document.getElementById('pdfTeacherLine').innerHTML = 'Teacher: <span style="text-decoration: underline; font-weight: bold;">...................................................</span>';
 }
 
 // ========== MASTER: MAPEL ==========
@@ -156,7 +161,7 @@ function renderGuru() {
 }
 function hapusGuru(i) { if(confirm('Hapus?')){data.guru.splice(i,1); save(); renderGuru(); refreshDropdowns();} }
 
-// ========== MASTER: KELAS (DENGAN TINGKATAN) ==========
+// ========== MASTER: KELAS ==========
 function tambahKelas() {
     const tingkatan = document.getElementById('kelasTingkatan').value;
     const nama = document.getElementById('kelasNama').value.trim();
@@ -187,7 +192,7 @@ function renderRuang() {
 }
 function hapusRuang(i) { if(confirm('Hapus?')){data.ruang.splice(i,1); save(); renderRuang(); refreshDropdowns();} }
 
-// ========== DROPDOWN REFRESH (DENGAN FILTER TINGKATAN) ==========
+// ========== DROPDOWN REFRESH ==========
 function refreshDropdowns() {
     document.getElementById('guruMapel').innerHTML = data.mapel.map(m => `<option value="${m.kode}">${m.nama}</option>`).join('');
     document.getElementById('kelasWali').innerHTML = '<option value="">-- Pilih Wali --</option>' + data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
@@ -195,15 +200,11 @@ function refreshDropdowns() {
     document.getElementById('jMapel').innerHTML = '<option value="">-- Pilih Mapel --</option>' + data.mapel.map(m => `<option value="${m.kode}">${m.nama}</option>`).join('');
     document.getElementById('jRuang').innerHTML = '<option value="">-- Pilih Ruangan --</option>' + data.ruang.map(r => `<option value="${r.kode}">${r.nama}</option>`).join('');
     
-    // Kelas di Input Jadwal - dengan filter tingkatan
     filterInputByTingkatan();
-    
-    // Dropdown Cetak
     document.getElementById('cetakGuruSelect').innerHTML = '<option value="">-- Pilih Guru --</option>' + data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
     filterKelasCetak();
 }
 
-// Filter kelas berdasarkan tingkatan di Input Jadwal
 function filterInputByTingkatan() {
     const tingkatan = document.getElementById('jTingkatan').value;
     let filteredKelas = data.kelas;
@@ -211,7 +212,6 @@ function filterInputByTingkatan() {
     document.getElementById('jKelas').innerHTML = '<option value="">-- Pilih Kelas --</option>' + filteredKelas.map(k => `<option value="${k.nama}">${k.nama} (${k.tingkatan})</option>`).join('');
 }
 
-// Filter kelas di menu Cetak
 function filterKelasCetak() {
     const tingkatan = document.getElementById('cetakTingkatanKelas').value;
     let filteredKelas = data.kelas;
@@ -311,15 +311,16 @@ function renderMatrix() {
     document.getElementById('matrixResult').innerHTML = html;
 }
 
-// ========== CETAK ROSTER PDF ==========
+// ========== CETAK ROSTER PDF (DIPERBAIKI) ==========
 function previewRoster() {
     const nip = document.getElementById('cetakGuruSelect').value;
     const btn = document.getElementById('btnDownloadGuru'), tabel = document.getElementById('tabelRosterCetak');
     if (!nip) { tabel.innerHTML = ''; btn.disabled = true; return; }
-    btn.disabled = false;
-    const guru = data.guru.find(g => g.nip === nip);
     
-    // Set judul PDF untuk Guru
+    const guru = data.guru.find(g => g.nip === nip);
+    if (!guru) { alert('❌ Data guru tidak ditemukan!'); btn.disabled = true; return; }
+    
+    btn.disabled = false;
     document.getElementById('pdfJudul').innerText = `GURU PON-PES DDI MATTOANGING`;
     document.getElementById('pdfFooterText').innerText = `ROSTER GURU PON-PES DDI MATTOANGING TAHUN PELAJARAN 2026-2027`;
     document.getElementById('pdfTeacherLine').innerHTML = `Teacher: <span style="text-decoration: underline; font-weight: bold;">${guru.nama}</span>`;
@@ -343,7 +344,7 @@ function previewRoster() {
     hariList.forEach(hari => {
         html += `<tr><td class="hari-col">${hari}</td>`;
         for (let j = 1; j <= 8; j++) {
-            const cell = uniqueJadwal.find(x => x.hari === hari && x.jam == j);
+            const cell = uniqueJadwal.find(x => x.hari === hari && parseInt(x.jam) === j);
             if (cell) {
                 const m = data.mapel.find(x => x.kode === cell.mapel);
                 const k = data.kelas.find(x => x.nama === cell.kelas);
@@ -359,20 +360,27 @@ function previewRoster() {
     });
     html += '</tbody>';
     tabel.innerHTML = html;
+
+    if (uniqueJadwal.length === 0) {
+        alert(`⚠️ Belum ada jadwal untuk guru ${guru.nama}. Silakan input jadwal terlebih dahulu.`);
+    }
 }
 
 function previewRosterKelas() {
     const namaKelas = document.getElementById('cetakKelasSelect').value;
     const btn = document.getElementById('btnDownloadKelas'), tabel = document.getElementById('tabelRosterCetak');
     if (!namaKelas) { tabel.innerHTML = ''; btn.disabled = true; return; }
-    btn.disabled = false;
-    const kelas = data.kelas.find(k => k.nama === namaKelas);
     
-    // Set judul PDF untuk Kelas
-    const tingkatan = kelas ? kelas.tingkatan : '';
+    const kelas = data.kelas.find(k => k.nama === namaKelas);
+    if (!kelas) { alert('❌ Data kelas tidak ditemukan!'); btn.disabled = true; return; }
+    
+    btn.disabled = false;
+    const tingkatan = kelas.tingkatan || '';
     document.getElementById('pdfJudul').innerText = `JADWAL KELAS ${namaKelas} (${tingkatan}) PON-PES DDI MATTOANGING`;
     document.getElementById('pdfFooterText').innerText = `JADWAL KELAS ${namaKelas} (${tingkatan}) PON-PES DDI MATTOANGING TAHUN PELAJARAN 2026-2027`;
-    document.getElementById('pdfTeacherLine').innerHTML = `Wali Kelas: <span style="text-decoration: underline; font-weight: bold;">${kelas && kelas.wali ? (data.guru.find(g=>g.nip===kelas.wali)?.nama || '-') : '-'}</span>`;
+    
+    const waliNama = kelas.wali ? (data.guru.find(g => g.nip === kelas.wali)?.nama || '-') : '-';
+    document.getElementById('pdfTeacherLine').innerHTML = `Wali Kelas: <span style="text-decoration: underline; font-weight: bold;">${waliNama}</span>`;
     
     const now = new Date();
     document.getElementById('tglCetak').innerText = `${now.getMonth()+1}/${now.getDate()}/${now.getFullYear()}`;
@@ -393,13 +401,12 @@ function previewRosterKelas() {
     hariList.forEach(hari => {
         html += `<tr><td class="hari-col">${hari}</td>`;
         for (let j = 1; j <= 8; j++) {
-            const cell = uniqueJadwal.find(x => x.hari === hari && x.jam == j);
+            const cell = uniqueJadwal.find(x => x.hari === hari && parseInt(x.jam) === j);
             if (cell) {
                 const m = data.mapel.find(x => x.kode === cell.mapel);
                 const g = data.guru.find(x => x.nip === cell.guru);
                 const bg = m ? hexToRgba(m.warna, 0.18) : 'rgba(33,150,243,0.15)';
                 const fg = m ? m.warna : '#1565c0';
-                // Untuk kelas: tampilkan Mapel + Guru (bukan Kelas)
                 html += `<td class="filled" style="background:${bg};">
                     <div class="cell-mapel" style="color:${fg};">${m?m.nama:cell.mapel}</div>
                     <div class="cell-guru">${g?g.nama:'-'}</div>
@@ -410,18 +417,32 @@ function previewRosterKelas() {
     });
     html += '</tbody>';
     tabel.innerHTML = html;
+
+    if (uniqueJadwal.length === 0) {
+        alert(`⚠️ Belum ada jadwal untuk kelas ${namaKelas}. Silakan input jadwal terlebih dahulu di menu Input Jadwal.`);
+    }
 }
 
 function downloadPDF(mode) {
+    const tabel = document.getElementById('tabelRosterCetak');
+    
+    // Validasi: Pastikan tabel tidak kosong (minimal ada header + 1 baris data)
+    if (!tabel || tabel.rows.length <= 1) {
+        alert('⚠️ Tabel jadwal masih kosong! Pastikan Anda sudah memilih data dan memiliki jadwal untuk data tersebut.');
+        return;
+    }
+
     const element = document.getElementById('areaCetakPDF');
     element.style.display = 'block';
     
     let filename = '';
     if (mode === 'guru') {
         const guru = data.guru.find(g => g.nip === document.getElementById('cetakGuruSelect').value);
+        if (!guru) { alert('❌ Data guru tidak ditemukan!'); element.style.display = 'none'; return; }
         filename = `Roster_Guru_${guru.nama.replace(/\s+/g,'_')}.pdf`;
     } else {
         const kelas = data.kelas.find(k => k.nama === document.getElementById('cetakKelasSelect').value);
+        if (!kelas) { alert('❌ Data kelas tidak ditemukan!'); element.style.display = 'none'; return; }
         filename = `Jadwal_Kelas_${kelas.nama.replace(/\s+/g,'_')}_${kelas.tingkatan}.pdf`;
     }
     
@@ -429,10 +450,29 @@ function downloadPDF(mode) {
         margin: 10,
         filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff' },
+        html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
     };
-    html2pdf().set(opt).from(element).save().then(() => { element.style.display = 'none'; });
+    
+    // Tampilkan status loading
+    const btnId = mode === 'guru' ? 'btnDownloadGuru' : 'btnDownloadKelas';
+    const btn = document.getElementById(btnId);
+    const originalText = btn.innerText;
+    btn.innerText = '⏳ Memproses PDF...';
+    btn.disabled = true;
+    
+    html2pdf().set(opt).from(element).save().then(() => { 
+        element.style.display = 'none';
+        btn.innerText = originalText;
+        btn.disabled = false;
+        console.log('✅ PDF berhasil diunduh:', filename);
+    }).catch((err) => {
+        console.error('❌ Error saat membuat PDF:', err);
+        alert('❌ Gagal membuat PDF. Pastikan browser Anda mendukung fitur ini.');
+        element.style.display = 'none';
+        btn.innerText = originalText;
+        btn.disabled = false;
+    });
 }
 
 // ========== UTILS ==========
