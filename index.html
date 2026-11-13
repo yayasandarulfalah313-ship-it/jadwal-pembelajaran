@@ -123,6 +123,8 @@
                 <h3>✏️ Input Jadwal Pembelajaran</h3>
                 <div class="alert alert-info">💡 Sistem akan otomatis mendeteksi bentrok pada <strong>Guru</strong>, <strong>Kelas</strong>, dan <strong>Ruangan</strong>.</div>
                 <div id="inputStatus"></div>
+                
+                <!-- ===== MODEL BARU: JAM MULAI + JUMLAH JAM ===== -->
                 <div class="form-grid">
                     <div class="form-group"><label>Tingkatan</label>
                         <select id="jTingkatan" onchange="filterInputByTingkatan()">
@@ -136,14 +138,39 @@
                     <div class="form-group"><label>Mata Pelajaran</label><select id="jMapel"><option value="">-- Pilih Mapel --</option></select></div>
                     <div class="form-group"><label>Kelas</label><select id="jKelas"><option value="">-- Pilih Kelas --</option></select></div>
                     <div class="form-group"><label>Ruangan</label><select id="jRuang"><option value="">-- Pilih Ruangan --</option></select></div>
-                    <div class="form-group"><label>Hari</label><select id="jHari"><option>Senin</option><option>Selasa</option><option>Rabu</option><option>Kamis</option><option>Jumat</option><option>Sabtu</option><option>Ahad</option></select></div>
-                    <div class="form-group"><label>Jam Pelajaran <small style="color:#f44336;">*(Ctrl/Cmd untuk >1)*</small></label>
-                        <select id="jJam" multiple size="5">
-                            <option value="1">1 (7:30 - 8:10)</option><option value="2">2 (8:10 - 8:50)</option><option value="3">3 (8:50 - 9:30)</option><option value="4">4 (9:30 - 10:10)</option>
-                            <option value="5">5 (10:20 - 11:00)</option><option value="6">6 (11:00 - 11:40)</option><option value="7">7 (11:40 - 12:20)</option><option value="8">8 (12:40 - 13:20)</option>
+                    <div class="form-group"><label>Hari</label>
+                        <select id="jHari">
+                            <option>Senin</option><option>Selasa</option><option>Rabu</option>
+                            <option>Kamis</option><option>Jumat</option><option>Sabtu</option><option>Ahad</option>
                         </select>
                     </div>
+                    <div class="form-group"><label>Jam Mulai</label>
+                        <select id="jJamMulai" onchange="updateJamPreview()">
+                            <option value="1">Jam 1 (7:30 - 8:10)</option>
+                            <option value="2">Jam 2 (8:10 - 8:50)</option>
+                            <option value="3">Jam 3 (8:50 - 9:30)</option>
+                            <option value="4">Jam 4 (9:30 - 10:10)</option>
+                            <option value="5">Jam 5 (10:20 - 11:00)</option>
+                            <option value="6">Jam 6 (11:00 - 11:40)</option>
+                            <option value="7">Jam 7 (11:40 - 12:20)</option>
+                            <option value="8">Jam 8 (12:40 - 13:20)</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Jumlah Jam</label>
+                        <select id="jJmlJam" onchange="updateJamPreview()">
+                            <option value="1">1 Jam</option>
+                            <option value="2">2 Jam</option>
+                            <option value="3">3 Jam</option>
+                            <option value="4">4 Jam</option>
+                        </select>
+                    </div>
+                    <!-- PREVIEW OTOMATIS -->
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Pratinjau Blok Jam</label>
+                        <div id="jamPreview" class="jam-preview">Pilih jam untuk melihat pratinjau.</div>
+                    </div>
                 </div>
+                
                 <button class="btn btn-primary" onclick="tambahJadwal()">💾 Simpan Jadwal</button>
                 <button class="btn btn-warning" onclick="resetFormJadwal()">🔄 Reset Form</button>
                 <h3 style="margin-top:30px;">📋 Daftar Jadwal</h3>
