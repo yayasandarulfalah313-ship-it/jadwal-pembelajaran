@@ -83,16 +83,14 @@ function showTab(id, el) {
 function showTabCetak(id, el) {
     document.querySelectorAll('.tab-content-cetak').forEach(t => t.classList.remove('active'));
     document.getElementById(id).classList.add('active');
-    document.querySelectorAll('#cetak .tabs .tab').forEach(t => t.classList.remove('active')); // Fixed selector
+    document.querySelectorAll('#cetak .tabs .tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
     currentCetakMode = id === 'cetakGuru' ? 'guru' : 'kelas';
     
-    // Reset preview dan tombol
     document.getElementById('tabelRosterCetak').innerHTML = '';
     document.getElementById('btnDownloadGuru').disabled = true;
     document.getElementById('btnDownloadKelas').disabled = true;
     
-    // Reset teks PDF ke default agar tidak tertukar
     document.getElementById('pdfJudul').innerText = 'GURU PON-PES DDI MATTOANGING';
     document.getElementById('pdfFooterText').innerText = 'ROSTER GURU PON-PES DDI MATTOANGING TAHUN PELAJARAN 2026-2027';
     document.getElementById('pdfTeacherLine').innerHTML = 'Teacher: <span style="text-decoration: underline; font-weight: bold;">...................................................</span>';
@@ -219,29 +217,93 @@ function filterKelasCetak() {
     document.getElementById('cetakKelasSelect').innerHTML = '<option value="">-- Pilih Kelas --</option>' + filteredKelas.map(k => `<option value="${k.nama}">${k.nama} (${k.tingkatan})</option>`).join('');
 }
 
-// ========== JADWAL ==========
+// ========== JADWAL (MODEL BARU: JAM MULAI + JUMLAH JAM) ==========
 function tambahJadwal() {
-    const guru = document.getElementById('jGuru').value, mapel = document.getElementById('jMapel').value, kelas = document.getElementById('jKelas').value, ruang = document.getElementById('jRuang').value, hari = document.getElementById('jHari').value;
-    const jams = Array.from(document.getElementById('jJam').selectedOptions).map(o => o.value);
+    const guru = document.getElementById('jGuru').value;
+    const mapel = document.getElementById('jMapel').value;
+    const kelas = document.getElementById('jKelas').value;
+    const ruang = document.getElementById('jRuang').value;
+    const hari = document.getElementById('jHari').value;
+    const jamMulai = parseInt(document.getElementById('jJamMulai').value);
+    const jumlahJam = parseInt(document.getElementById('jJmlJam').value);
     const status = document.getElementById('inputStatus');
-    if (!guru || !mapel || !kelas || !ruang) { status.innerHTML = '<div class="alert alert-danger">⚠️ Lengkapi semua field!</div>'; return; }
-    if (jams.length === 0) { status.innerHTML = '<div class="alert alert-danger">⚠️ Pilih minimal 1 Jam!</div>'; return; }
-    jams.sort((a,b) => parseInt(a)-parseInt(b));
-    for (let jam of jams) {
-        if (data.jadwal.find(j => j.guru === guru && j.hari === hari && j.jam === jam)) { status.innerHTML = `<div class="alert alert-danger">🚫 BENTROK GURU! Sudah mengajar ${hari} jam ${jam}.</div>`; return; }
-        if (data.jadwal.find(j => j.kelas === kelas && j.hari === hari && j.jam === jam)) { status.innerHTML = `<div class="alert alert-danger">🚫 BENTROK KELAS! ${kelas} sudah ada jadwal ${hari} jam ${jam}.</div>`; return; }
-        if (data.jadwal.find(j => j.ruang === ruang && j.hari === hari && j.jam === jam)) { status.innerHTML = `<div class="alert alert-danger">🚫 BENTROK RUANGAN! ${ruang} sudah dipakai ${hari} jam ${jam}.</div>`; return; }
+
+    if (!guru || !mapel || !kelas || !ruang) {
+        status.innerHTML = '<div class="alert alert-danger">⚠️ Lengkapi semua field!</div>';
+        return;
     }
+
+    // Hitung blok jam berurutan
+    const jamAkhir = jamMulai + jumlahJam - 1;
+    if (jamAkhir > 8) {
+        status.innerHTML = `<div class="alert alert-danger">🚫 Blok jam melewati Jam 8! Jam mulai ${jamMulai} + ${jumlahJam} jam = berakhir di Jam ${jamAkhir} (maksimal Jam 8).</div>`;
+        return;
+    }
+
+    const jams = [];
+    for (let i = 0; i < jumlahJam; i++) jams.push(String(jamMulai + i));
+
+    // Cek bentrok per jam
+    for (let jam of jams) {
+        if (data.jadwal.find(j => j.guru === guru && j.hari === hari && j.jam === jam)) {
+            const g = data.guru.find(x => x.nip === guru);
+            status.innerHTML = `<div class="alert alert-danger">🚫 <strong>BENTROK GURU!</strong> ${g.nama} sudah mengajar ${hari} jam ${jam}.</div>`;
+            return;
+        }
+        if (data.jadwal.find(j => j.kelas === kelas && j.hari === hari && j.jam === jam)) {
+            status.innerHTML = `<div class="alert alert-danger">🚫 <strong>BENTROK KELAS!</strong> ${kelas} sudah ada jadwal ${hari} jam ${jam}.</div>`;
+            return;
+        }
+        if (data.jadwal.find(j => j.ruang === ruang && j.hari === hari && j.jam === jam)) {
+            status.innerHTML = `<div class="alert alert-danger">🚫 <strong>BENTROK RUANGAN!</strong> ${ruang} sudah dipakai ${hari} jam ${jam}.</div>`;
+            return;
+        }
+    }
+
+    // Simpan seluruh blok sekaligus
     const baseId = Date.now();
-    for (let i = 0; i < jams.length; i++) data.jadwal.push({guru, mapel, kelas, ruang, hari, jam: jams[i], id: baseId + i});
+    for (let i = 0; i < jams.length; i++) {
+        data.jadwal.push({ guru, mapel, kelas, ruang, hari, jam: jams[i], id: baseId + i });
+    }
     save(); renderJadwal();
-    status.innerHTML = `<div class="alert alert-success">✅ Jadwal disimpan untuk Jam ke-${jams.join(' dan ')} tanpa bentrok!</div>`;
+    status.innerHTML = `<div class="alert alert-success">✅ Jadwal ${jumlahJam} jam (${hari} Jam ${jams[0]}–${jams[jams.length-1]}) berhasil disimpan tanpa bentrok!</div>`;
     resetFormJadwal();
 }
+
 function resetFormJadwal() {
     ['jGuru','jMapel','jKelas','jRuang','jTingkatan'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('jJam').selectedIndex = -1; document.getElementById('inputStatus').innerHTML = '';
+    document.getElementById('jHari').value = 'Senin';
+    document.getElementById('jJamMulai').value = '1';
+    document.getElementById('jJmlJam').value = '1';
+    document.getElementById('inputStatus').innerHTML = '';
+    updateJamPreview();
 }
+
+function updateJamPreview() {
+    const jamMulai = parseInt(document.getElementById('jJamMulai').value);
+    const jumlahJam = parseInt(document.getElementById('jJmlJam').value);
+    const hari = document.getElementById('jHari').value;
+    const box = document.getElementById('jamPreview');
+
+    const jamAkhir = jamMulai + jumlahJam - 1;
+
+    if (jamAkhir > 8) {
+        box.className = 'jam-preview error';
+        box.innerHTML = `⚠️ Tidak valid! Blok berakhir di Jam ${jamAkhir}, melewati Jam 8. Kurangi jumlah jam atau geser jam mulai.`;
+        return;
+    }
+
+    box.className = 'jam-preview';
+    let html = `<strong style="color:#1e3c72;">${hari}:</strong>&nbsp;`;
+    for (let i = 0; i < jumlahJam; i++) {
+        const j = jamMulai + i;
+        if (i > 0) html += `<span class="chip chip-arrow">→</span>`;
+        html += `<span class="chip">Jam ${j}</span><span class="chip chip-waktu">${waktuMap[j]}</span>`;
+    }
+    html += ` &nbsp;<em style="color:#888;">(${jumlahJam} jam berurutan)</em>`;
+    box.innerHTML = html;
+}
+
 function renderJadwal() {
     const sorted = [...data.jadwal].sort((a,b) => hariList.indexOf(a.hari)-hariList.indexOf(b.hari) || a.jam-b.jam);
     document.getElementById('tblJadwal').innerHTML = sorted.map(j => {
@@ -311,7 +373,7 @@ function renderMatrix() {
     document.getElementById('matrixResult').innerHTML = html;
 }
 
-// ========== CETAK ROSTER PDF (DIPERBAIKI) ==========
+// ========== CETAK ROSTER PDF ==========
 function previewRoster() {
     const nip = document.getElementById('cetakGuruSelect').value;
     const btn = document.getElementById('btnDownloadGuru'), tabel = document.getElementById('tabelRosterCetak');
@@ -426,7 +488,6 @@ function previewRosterKelas() {
 function downloadPDF(mode) {
     const tabel = document.getElementById('tabelRosterCetak');
     
-    // Validasi: Pastikan tabel tidak kosong (minimal ada header + 1 baris data)
     if (!tabel || tabel.rows.length <= 1) {
         alert('⚠️ Tabel jadwal masih kosong! Pastikan Anda sudah memilih data dan memiliki jadwal untuk data tersebut.');
         return;
@@ -454,7 +515,6 @@ function downloadPDF(mode) {
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
     };
     
-    // Tampilkan status loading
     const btnId = mode === 'guru' ? 'btnDownloadGuru' : 'btnDownloadKelas';
     const btn = document.getElementById(btnId);
     const originalText = btn.innerText;
@@ -513,3 +573,4 @@ const now = new Date();
 document.getElementById('currentDate').innerText = `${hari[now.getDay()]}, ${now.getDate()} ${bulan[now.getMonth()]} ${now.getFullYear()}`;
 
 renderAll();
+updateJamPreview();
