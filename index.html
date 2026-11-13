@@ -138,12 +138,20 @@
                     <div class="form-group"><label>Mata Pelajaran</label><select id="jMapel"><option value="">-- Pilih Mapel --</option></select></div>
                     <div class="form-group"><label>Kelas</label><select id="jKelas"><option value="">-- Pilih Kelas --</option></select></div>
                     <div class="form-group"><label>Ruangan</label><select id="jRuang"><option value="">-- Pilih Ruangan --</option></select></div>
+                    
+                    <!-- PERUBAHAN 1a: HARI DENGAN OPSI LIBUR -->
                     <div class="form-group"><label>Hari</label>
                         <select id="jHari">
-                            <option>Senin</option><option>Selasa</option><option>Rabu</option>
-                            <option>Kamis</option><option>Jumat</option><option>Sabtu</option><option>Ahad</option>
+                            <option>Senin</option>
+                            <option>Selasa</option>
+                            <option>Rabu</option>
+                            <option>Kamis</option>
+                            <option value="Jumat">Jumat (🚫 LIBUR)</option>
+                            <option>Sabtu</option>
+                            <option>Ahad</option>
                         </select>
                     </div>
+
                     <div class="form-group"><label>Jam Mulai</label>
                         <select id="jJamMulai" onchange="updateJamPreview()">
                             <option value="1">Jam 1 (7:30 - 8:10)</option>
@@ -183,7 +191,15 @@
             <div class="panel">
                 <h3>👁️ Lihat Jadwal</h3>
                 <div class="form-grid">
-                    <div class="form-group"><label>Tampilkan Berdasarkan</label><select id="viewMode" onchange="initView()"><option value="kelas">Per Kelas</option><option value="guru">Per Guru</option><option value="ruang">Per Ruangan</option></select></div>
+                    <div class="form-group"><label>Tampilkan Berdasarkan</label>
+                        <!-- PERUBAHAN 1b: TAMBAHAN OPSI ANALISIS KEKOSONGAN -->
+                        <select id="viewMode" onchange="initView()">
+                            <option value="kelas">Per Kelas</option>
+                            <option value="guru">Per Guru</option>
+                            <option value="ruang">Per Ruangan</option>
+                            <option value="kekosongan">🔍 Analisis Kekosongan Jadwal</option>
+                        </select>
+                    </div>
                     <div class="form-group"><label>Pilih</label><select id="viewSelect" onchange="renderView()"></select></div>
                 </div>
                 <button class="btn btn-primary no-print" onclick="window.print()">🖨️ Cetak Jadwal</button>
