@@ -1,6 +1,7 @@
 // ========== DATA STORE & CONFIG ==========
 const waktuMap = { '1':'7:30-8:10','2':'8:10-8:50','3':'8:50-9:30','4':'9:30-10:10','5':'10:20-11:00','6':'11:00-11:40','7':'11:40-12:20','8':'12:40-13:20' };
 const hariList = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Ahad'];
+const HARI_AKTIF = ['Senin','Selasa','Rabu','Kamis','Sabtu','Ahad']; // Jumat = LIBUR
 const tingkatanList = ['SMP', 'MTs', 'MA'];
 
 let data = {
@@ -217,7 +218,7 @@ function filterKelasCetak() {
     document.getElementById('cetakKelasSelect').innerHTML = '<option value="">-- Pilih Kelas --</option>' + filteredKelas.map(k => `<option value="${k.nama}">${k.nama} (${k.tingkatan})</option>`).join('');
 }
 
-// ========== JADWAL (MODEL BARU: JAM MULAI + JUMLAH JAM) ==========
+// ========== JADWAL ==========
 function tambahJadwal() {
     const guru = document.getElementById('jGuru').value;
     const mapel = document.getElementById('jMapel').value;
@@ -233,17 +234,21 @@ function tambahJadwal() {
         return;
     }
 
-    // Hitung blok jam berurutan
+    // 🚫 VALIDASI HARI LIBUR
+    if (hari === 'Jumat') {
+        status.innerHTML = '<div class="alert alert-danger">🚫 <strong>HARI LIBUR!</strong> Hari Jumat adalah hari libur dan tidak dapat dijadwalkan.</div>';
+        return;
+    }
+
     const jamAkhir = jamMulai + jumlahJam - 1;
     if (jamAkhir > 8) {
-        status.innerHTML = `<div class="alert alert-danger">🚫 Blok jam melewati Jam 8! Jam mulai ${jamMulai} + ${jumlahJam} jam = berakhir di Jam ${jamAkhir} (maksimal Jam 8).</div>`;
+        status.innerHTML = `<div class="alert alert-danger">🚫 Blok jam melewati Jam 8! Berakhir di Jam ${jamAkhir} (maksimal Jam 8).</div>`;
         return;
     }
 
     const jams = [];
     for (let i = 0; i < jumlahJam; i++) jams.push(String(jamMulai + i));
 
-    // Cek bentrok per jam
     for (let jam of jams) {
         if (data.jadwal.find(j => j.guru === guru && j.hari === hari && j.jam === jam)) {
             const g = data.guru.find(x => x.nip === guru);
@@ -260,7 +265,6 @@ function tambahJadwal() {
         }
     }
 
-    // Simpan seluruh blok sekaligus
     const baseId = Date.now();
     for (let i = 0; i < jams.length; i++) {
         data.jadwal.push({ guru, mapel, kelas, ruang, hari, jam: jams[i], id: baseId + i });
@@ -319,14 +323,31 @@ function hapusJadwal(id) { if(confirm('Hapus?')){data.jadwal = data.jadwal.filte
 
 // ========== LIHAT JADWAL ==========
 function initView() {
-    const mode = document.getElementById('viewMode').value, sel = document.getElementById('viewSelect');
+    const mode = document.getElementById('viewMode').value;
+    const sel = document.getElementById('viewSelect');
+    const selGroup = sel.closest('.form-group');
+
+    // Mode kekosongan tidak butuh pilihan objek
+    if (mode === 'kekosongan') {
+        selGroup.style.display = 'none';
+        renderView();
+        return;
+    }
+    selGroup.style.display = 'block';
+
     if (mode === 'kelas') sel.innerHTML = '<option value="">-- Pilih Kelas --</option>' + data.kelas.map(k => `<option value="${k.nama}">${k.nama} (${k.tingkatan})</option>`).join('');
     if (mode === 'guru') sel.innerHTML = '<option value="">-- Pilih Guru --</option>' + data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
     if (mode === 'ruang') sel.innerHTML = '<option value="">-- Pilih Ruangan --</option>' + data.ruang.map(r => `<option value="${r.kode}">${r.nama}</option>`).join('');
     renderView();
 }
+
 function renderView() {
-    const mode = document.getElementById('viewMode').value, val = document.getElementById('viewSelect').value;
+    const mode = document.getElementById('viewMode').value;
+
+    // 🔍 MODE ANALISIS KEKOSONGAN
+    if (mode === 'kekosongan') { renderKekosongan(); return; }
+
+    const val = document.getElementById('viewSelect').value;
     if (!val) { document.getElementById('viewResult').innerHTML = ''; return; }
     let filtered = [], title = '';
     if (mode === 'kelas') { filtered = data.jadwal.filter(j => j.kelas === val); const k = data.kelas.find(x=>x.nama===val); title = `Jadwal Kelas: ${val} (${k?k.tingkatan:''})`; }
@@ -335,9 +356,63 @@ function renderView() {
     filtered.sort((a,b) => hariList.indexOf(a.hari)-hariList.indexOf(b.hari) || a.jam-b.jam);
     let html = `<h3 style="color:#1e3c72;">${title}</h3><table><thead><tr><th>Hari</th><th>Jam</th><th>Kelas</th><th>Mapel</th><th>Guru</th><th>Ruangan</th></tr></thead><tbody>`;
     if (filtered.length === 0) html += '<tr><td colspan="6" style="text-align:center;color:#999;">Tidak ada jadwal</td></tr>';
-    filtered.forEach(j => { const g = data.guru.find(x => x.nip === j.guru), m = data.mapel.find(x => x.kode === j.mapel); html += `<tr><td><strong>${j.hari}</strong></td><td>${j.jam} (${waktuMap[j.jam]})</td><td>${j.kelas}</td><td><span class="badge" style="background:${m?m.warna:'#ccc'}">${m?m.nama:j.mapel}</span></td><td>${g?g.nama:'-'}</td><td>${j.ruang}</td></tr>`; });
+    filtered.forEach(j => { 
+        const g = data.guru.find(x => x.nip === j.guru), m = data.mapel.find(x => x.kode === j.mapel);
+        const libur = j.hari === 'Jumat' ? ' style="background:#f8d7da;"' : '';
+        html += `<tr${libur}><td><strong>${j.hari}</strong>${j.hari==='Jumat'?' 🚫':''}</td><td>${j.jam} (${waktuMap[j.jam]})</td><td>${j.kelas}</td><td><span class="badge" style="background:${m?m.warna:'#ccc'}">${m?m.nama:j.mapel}</span></td><td>${g?g.nama:'-'}</td><td>${j.ruang}</td></tr>`; 
+    });
     html += '</tbody></table>';
     document.getElementById('viewResult').innerHTML = html;
+}
+
+function renderKekosongan() {
+    const container = document.getElementById('viewResult');
+    const totalSlot = HARI_AKTIF.length * 8; // 6 hari x 8 jam = 48
+
+    let html = `<h3 style="color:#1e3c72;">🔍 Analisis Kekosongan Jadwal</h3>`;
+    html += `<div class="alert alert-info">📌 Slot efektif per kelas = <strong>${HARI_AKTIF.length} hari aktif × 8 jam = ${totalSlot} jam pelajaran</strong> (Hari Jumat = 🚫 LIBUR, tidak dihitung).</div>`;
+
+    if (data.kelas.length === 0) {
+        html += '<p style="color:#999; text-align:center;">Belum ada data kelas.</p>';
+        container.innerHTML = html; return;
+    }
+
+    data.kelas.forEach(k => {
+        const jk = data.jadwal.filter(j => j.kelas === k.nama);
+        const terisi = jk.length;
+        const kosong = totalSlot - terisi;
+        const pct = Math.round((terisi / totalSlot) * 100);
+
+        // Cari daftar slot kosong
+        const kosongList = [];
+        HARI_AKTIF.forEach(h => {
+            for (let jam = 1; jam <= 8; jam++) {
+                if (!jk.find(x => x.hari === h && parseInt(x.jam) === jam)) kosongList.push(`${h} J${jam}`);
+            }
+        });
+
+        let statusClass, statusText;
+        if (terisi === 0) { statusClass = 'status-kosong'; statusText = '🔴 BELUM ADA JADWAL'; }
+        else if (kosong === 0) { statusClass = 'status-penuh'; statusText = '🟢 PENUH'; }
+        else { statusClass = 'status-sisa'; statusText = `🟡 SISA ${kosong} SLOT KOSONG`; }
+
+        html += `<div class="kekosongan-card">
+            <div class="kekosongan-header">
+                <div><span class="badge badge-tingkatan">${k.tingkatan}</span> <strong>${k.nama}</strong></div>
+                <span class="status-badge ${statusClass}">${statusText}</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;"></div></div>
+            <small>Terisi: <strong>${terisi}</strong> / ${totalSlot} jam (${pct}%)</small>`;
+        if (kosong > 0) {
+            html += `<div style="margin-top:8px;"><strong style="font-size:12px;">Slot yang masih kosong:</strong><div style="margin-top:4px;">`;
+            kosongList.forEach(s => html += `<span class="slot-kosong-chip">${s}</span>`);
+            html += `</div></div>`;
+        } else {
+            html += `<div style="margin-top:8px; color:#2e7d32; font-weight:600;">✅ Semua slot terisi!</div>`;
+        }
+        html += `</div>`;
+    });
+    container.innerHTML = html;
 }
 
 // ========== MATRIKS ==========
@@ -355,11 +430,12 @@ function renderMatrix() {
     if (mode === 'kelas') { filtered = data.jadwal.filter(j => j.kelas === val); const k = data.kelas.find(x=>x.nama===val); title = `Matriks Jadwal Kelas: ${val} (${k?k.tingkatan:''})`; }
     else { filtered = data.jadwal.filter(j => j.guru === val); const guru = data.guru.find(g => g.nip === val); title = `Matriks Jadwal Mengajar: ${guru?guru.nama:val}`; }
     let html = `<h3 style="color:#1e3c72; margin-bottom:15px;">${title}</h3><table class="matrix-table" style="border-collapse:collapse; width:100%;"><thead><tr style="background:#1e3c72; color:white;"><th>Jam / Hari</th>`;
-    hariList.forEach(h => html += `<th style="padding:10px;">${h}</th>`);
+    hariList.forEach(h => html += `<th style="padding:10px; ${h==='Jumat'?'background:#9e9e9e;':''}">${h}${h==='Jumat'?'<br><small>(LIBUR)</small>':''}</th>`);
     html += '</tr></thead><tbody>';
     jam.forEach(j => {
         html += `<tr style="background:#f0f2f5;"><th style="padding:8px; text-align:left;">Jam ${j}<br><small>${waktuMap[j]}</small></th>`;
         hariList.forEach(h => {
+            if (h === 'Jumat') { html += `<td class="matrix-libur">🚫</td>`; return; }
             const cell = filtered.find(x => x.hari === h && parseInt(x.jam) === j);
             if (cell) {
                 const m = data.mapel.find(x => x.kode === cell.mapel), g = data.guru.find(x => x.nip === cell.guru);
@@ -378,32 +454,30 @@ function previewRoster() {
     const nip = document.getElementById('cetakGuruSelect').value;
     const btn = document.getElementById('btnDownloadGuru'), tabel = document.getElementById('tabelRosterCetak');
     if (!nip) { tabel.innerHTML = ''; btn.disabled = true; return; }
-    
     const guru = data.guru.find(g => g.nip === nip);
     if (!guru) { alert('❌ Data guru tidak ditemukan!'); btn.disabled = true; return; }
-    
     btn.disabled = false;
     document.getElementById('pdfJudul').innerText = `GURU PON-PES DDI MATTOANGING`;
     document.getElementById('pdfFooterText').innerText = `ROSTER GURU PON-PES DDI MATTOANGING TAHUN PELAJARAN 2026-2027`;
     document.getElementById('pdfTeacherLine').innerHTML = `Teacher: <span style="text-decoration: underline; font-weight: bold;">${guru.nama}</span>`;
-    
     const now = new Date();
     document.getElementById('tglCetak').innerText = `${now.getMonth()+1}/${now.getDate()}/${now.getFullYear()}`;
-    
     const jadwalGuru = data.jadwal.filter(j => j.guru === nip);
     const seen = new Set();
-    const uniqueJadwal = jadwalGuru.filter(j => {
-        const key = `${j.hari}-${j.jam}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-    }).sort((a,b) => hariList.indexOf(a.hari)-hariList.indexOf(b.hari) || a.jam-b.jam);
-    
+    const uniqueJadwal = jadwalGuru.filter(j => { const key = `${j.hari}-${j.jam}`; if (seen.has(key)) return false; seen.add(key); return true; })
+        .sort((a,b) => hariList.indexOf(a.hari)-hariList.indexOf(b.hari) || a.jam-b.jam);
+
     let html = '<thead><tr><th class="hari-col">Hari</th>';
     for (let i = 1; i <= 8; i++) html += `<th class="jam-header">${i}<br>${waktuMap[i]}</th>`;
     html += '</tr></thead><tbody>';
-    
+
     hariList.forEach(hari => {
+        if (hari === 'Jumat') {
+            html += `<tr class="hari-libur"><td class="hari-col">Jumat <span class="libur-label">(LIBUR)</span></td>`;
+            for (let j = 1; j <= 8; j++) html += '<td></td>';
+            html += '</tr>';
+            return;
+        }
         html += `<tr><td class="hari-col">${hari}</td>`;
         for (let j = 1; j <= 8; j++) {
             const cell = uniqueJadwal.find(x => x.hari === hari && parseInt(x.jam) === j);
@@ -422,45 +496,39 @@ function previewRoster() {
     });
     html += '</tbody>';
     tabel.innerHTML = html;
-
-    if (uniqueJadwal.length === 0) {
-        alert(`⚠️ Belum ada jadwal untuk guru ${guru.nama}. Silakan input jadwal terlebih dahulu.`);
-    }
+    if (uniqueJadwal.length === 0) alert(`⚠️ Belum ada jadwal untuk guru ${guru.nama}. Silakan input jadwal terlebih dahulu.`);
 }
 
 function previewRosterKelas() {
     const namaKelas = document.getElementById('cetakKelasSelect').value;
     const btn = document.getElementById('btnDownloadKelas'), tabel = document.getElementById('tabelRosterCetak');
     if (!namaKelas) { tabel.innerHTML = ''; btn.disabled = true; return; }
-    
     const kelas = data.kelas.find(k => k.nama === namaKelas);
     if (!kelas) { alert('❌ Data kelas tidak ditemukan!'); btn.disabled = true; return; }
-    
     btn.disabled = false;
     const tingkatan = kelas.tingkatan || '';
     document.getElementById('pdfJudul').innerText = `JADWAL KELAS ${namaKelas} (${tingkatan}) PON-PES DDI MATTOANGING`;
     document.getElementById('pdfFooterText').innerText = `JADWAL KELAS ${namaKelas} (${tingkatan}) PON-PES DDI MATTOANGING TAHUN PELAJARAN 2026-2027`;
-    
     const waliNama = kelas.wali ? (data.guru.find(g => g.nip === kelas.wali)?.nama || '-') : '-';
     document.getElementById('pdfTeacherLine').innerHTML = `Wali Kelas: <span style="text-decoration: underline; font-weight: bold;">${waliNama}</span>`;
-    
     const now = new Date();
     document.getElementById('tglCetak').innerText = `${now.getMonth()+1}/${now.getDate()}/${now.getFullYear()}`;
-    
     const jadwalKelas = data.jadwal.filter(j => j.kelas === namaKelas);
     const seen = new Set();
-    const uniqueJadwal = jadwalKelas.filter(j => {
-        const key = `${j.hari}-${j.jam}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-    }).sort((a,b) => hariList.indexOf(a.hari)-hariList.indexOf(b.hari) || a.jam-b.jam);
-    
+    const uniqueJadwal = jadwalKelas.filter(j => { const key = `${j.hari}-${j.jam}`; if (seen.has(key)) return false; seen.add(key); return true; })
+        .sort((a,b) => hariList.indexOf(a.hari)-hariList.indexOf(b.hari) || a.jam-b.jam);
+
     let html = '<thead><tr><th class="hari-col">Hari</th>';
     for (let i = 1; i <= 8; i++) html += `<th class="jam-header">${i}<br>${waktuMap[i]}</th>`;
     html += '</tr></thead><tbody>';
-    
+
     hariList.forEach(hari => {
+        if (hari === 'Jumat') {
+            html += `<tr class="hari-libur"><td class="hari-col">Jumat <span class="libur-label">(LIBUR)</span></td>`;
+            for (let j = 1; j <= 8; j++) html += '<td></td>';
+            html += '</tr>';
+            return;
+        }
         html += `<tr><td class="hari-col">${hari}</td>`;
         for (let j = 1; j <= 8; j++) {
             const cell = uniqueJadwal.find(x => x.hari === hari && parseInt(x.jam) === j);
@@ -479,10 +547,7 @@ function previewRosterKelas() {
     });
     html += '</tbody>';
     tabel.innerHTML = html;
-
-    if (uniqueJadwal.length === 0) {
-        alert(`⚠️ Belum ada jadwal untuk kelas ${namaKelas}. Silakan input jadwal terlebih dahulu di menu Input Jadwal.`);
-    }
+    if (uniqueJadwal.length === 0) alert(`⚠️ Belum ada jadwal untuk kelas ${namaKelas}. Silakan input jadwal terlebih dahulu di menu Input Jadwal.`);
 }
 
 function downloadPDF(mode) {
