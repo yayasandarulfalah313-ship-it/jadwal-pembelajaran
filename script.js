@@ -1,6 +1,7 @@
 // ========== DATA STORE & CONFIG ==========
 const waktuMap = { '1':'7:30-8:10','2':'8:10-8:50','3':'8:50-9:30','4':'9:30-10:10','5':'10:20-11:00','6':'11:00-11:40','7':'11:40-12:20','8':'12:40-13:20' };
 const hariList = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Ahad'];
+const tingkatanList = ['SMP', 'MTs', 'MA'];
 
 let data = {
     guru: JSON.parse(localStorage.getItem('guru') || '[]'),
@@ -11,6 +12,9 @@ let data = {
 };
 let logoSettings = JSON.parse(localStorage.getItem('logoSettings') || '{"src":"","size":100}');
 
+// Variabel untuk menyimpan mode cetak aktif
+let currentCetakMode = 'guru'; // 'guru' atau 'kelas'
+
 function save() { Object.keys(data).forEach(k => localStorage.setItem(k, JSON.stringify(data[k]))); updateStats(); }
 
 // Helper: hex -> rgba
@@ -18,6 +22,12 @@ function hexToRgba(hex, a) {
     const h = hex.replace('#','');
     const r = parseInt(h.substring(0,2),16), g = parseInt(h.substring(2,4),16), b = parseInt(h.substring(4,6),16);
     return `rgba(${r},${g},${b},${a})`;
+}
+
+// Helper: cari tingkatan kelas
+function getTingkatanKelas(namaKelas) {
+    const k = data.kelas.find(x => x.nama === namaKelas);
+    return k ? k.tingkatan : '';
 }
 
 // ========== LOGO FUNCTIONS ==========
@@ -32,24 +42,16 @@ function saveLogoSettings() { logoSettings.size = parseInt(document.getElementBy
 
 function applyLogo() {
     const hasLogo = logoSettings.src && logoSettings.src.length > 10;
-    
-    // Preview di menu Logo
     const preview = document.getElementById('logoPreview'), placeholder = document.getElementById('logoPlaceholder'), btnHapus = document.getElementById('btnHapusLogo');
     if (hasLogo) { preview.src = logoSettings.src; preview.style.display = 'block'; placeholder.style.display = 'none'; btnHapus.style.display = 'inline-block'; }
     else { preview.style.display = 'none'; placeholder.style.display = 'block'; btnHapus.style.display = 'none'; }
-    
-    // Sidebar logo
     const sidebarLogo = document.getElementById('sidebarLogo');
     if (hasLogo) { sidebarLogo.src = logoSettings.src; sidebarLogo.style.display = 'block'; } else { sidebarLogo.style.display = 'none'; }
-    
-    // PDF logo - atur ukuran dinamis
     const pdfLogo = document.getElementById('pdfLogo');
     const logoPlaceholderPDF = document.getElementById('logoPlaceholderPDF');
     if (hasLogo) { 
-        pdfLogo.src = logoSettings.src; 
-        pdfLogo.style.display = 'block'; 
-        pdfLogo.style.width = logoSettings.size+'px'; 
-        pdfLogo.style.height = logoSettings.size+'px';
+        pdfLogo.src = logoSettings.src; pdfLogo.style.display = 'block'; 
+        pdfLogo.style.width = logoSettings.size+'px'; pdfLogo.style.height = logoSettings.size+'px';
         logoPlaceholderPDF.style.display = 'none';
     } else { 
         pdfLogo.style.display = 'none';
@@ -57,7 +59,6 @@ function applyLogo() {
         logoPlaceholderPDF.style.width = logoSettings.size+'px';
         logoPlaceholderPDF.style.height = logoSettings.size+'px';
     }
-    
     document.getElementById('logoSize').value = logoSettings.size;
 }
 
@@ -79,6 +80,17 @@ function showTab(id, el) {
     document.getElementById(id).classList.add('active');
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
+}
+function showTabCetak(id, el) {
+    document.querySelectorAll('.tab-content-cetak').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('#cetak .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    currentCetakMode = id === 'cetakGuru' ? 'guru' : 'kelas';
+    // Reset preview
+    document.getElementById('tabelRosterCetak').innerHTML = '';
+    document.getElementById('btnDownloadGuru').disabled = true;
+    document.getElementById('btnDownloadKelas').disabled = true;
 }
 
 // ========== MASTER: MAPEL ==========
@@ -144,16 +156,22 @@ function renderGuru() {
 }
 function hapusGuru(i) { if(confirm('Hapus?')){data.guru.splice(i,1); save(); renderGuru(); refreshDropdowns();} }
 
-// ========== MASTER: KELAS & RUANGAN ==========
+// ========== MASTER: KELAS (DENGAN TINGKATAN) ==========
 function tambahKelas() {
-    const nama = document.getElementById('kelasNama').value.trim(), wali = document.getElementById('kelasWali').value, kap = document.getElementById('kelasKap').value;
-    if (!nama || !wali) return alert('Lengkapi data!');
+    const tingkatan = document.getElementById('kelasTingkatan').value;
+    const nama = document.getElementById('kelasNama').value.trim();
+    const wali = document.getElementById('kelasWali').value;
+    const kap = document.getElementById('kelasKap').value;
+    if (!nama || !wali) return alert('Lengkapi data kelas!');
     if (data.kelas.find(k => k.nama === nama)) return alert('Nama kelas sudah ada!');
-    data.kelas.push({nama, wali, kap}); save(); renderKelas(); refreshDropdowns();
+    data.kelas.push({nama, wali, kap, tingkatan}); save(); renderKelas(); refreshDropdowns();
     document.getElementById('kelasNama').value = ''; document.getElementById('kelasKap').value = '';
 }
 function renderKelas() {
-    document.getElementById('tblKelas').innerHTML = data.kelas.map((k,i) => { const g = data.guru.find(x => x.nip === k.wali); return `<tr><td><strong>${k.nama}</strong></td><td>${g?g.nama:'-'}</td><td>${k.kap||'-'} siswa</td><td><button class="btn btn-danger btn-sm" onclick="hapusKelas(${i})">Hapus</button></td></tr>`; }).join('') || '<tr><td colspan="4" style="text-align:center;color:#999;">Belum ada data</td></tr>';
+    document.getElementById('tblKelas').innerHTML = data.kelas.map((k,i) => { 
+        const g = data.guru.find(x => x.nip === k.wali); 
+        return `<tr><td><span class="badge badge-tingkatan">${k.tingkatan || '-'}</span></td><td><strong>${k.nama}</strong></td><td>${g?g.nama:'-'}</td><td>${k.kap||'-'} siswa</td><td><button class="btn btn-danger btn-sm" onclick="hapusKelas(${i})">Hapus</button></td></tr>`; 
+    }).join('') || '<tr><td colspan="5" style="text-align:center;color:#999;">Belum ada data</td></tr>';
 }
 function hapusKelas(i) { if(confirm('Hapus?')){data.kelas.splice(i,1); save(); renderKelas(); refreshDropdowns();} }
 
@@ -169,14 +187,36 @@ function renderRuang() {
 }
 function hapusRuang(i) { if(confirm('Hapus?')){data.ruang.splice(i,1); save(); renderRuang(); refreshDropdowns();} }
 
+// ========== DROPDOWN REFRESH (DENGAN FILTER TINGKATAN) ==========
 function refreshDropdowns() {
     document.getElementById('guruMapel').innerHTML = data.mapel.map(m => `<option value="${m.kode}">${m.nama}</option>`).join('');
     document.getElementById('kelasWali').innerHTML = '<option value="">-- Pilih Wali --</option>' + data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
     document.getElementById('jGuru').innerHTML = '<option value="">-- Pilih Guru --</option>' + data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
     document.getElementById('jMapel').innerHTML = '<option value="">-- Pilih Mapel --</option>' + data.mapel.map(m => `<option value="${m.kode}">${m.nama}</option>`).join('');
-    document.getElementById('jKelas').innerHTML = '<option value="">-- Pilih Kelas --</option>' + data.kelas.map(k => `<option value="${k.nama}">${k.nama}</option>`).join('');
     document.getElementById('jRuang').innerHTML = '<option value="">-- Pilih Ruangan --</option>' + data.ruang.map(r => `<option value="${r.kode}">${r.nama}</option>`).join('');
+    
+    // Kelas di Input Jadwal - dengan filter tingkatan
+    filterInputByTingkatan();
+    
+    // Dropdown Cetak
     document.getElementById('cetakGuruSelect').innerHTML = '<option value="">-- Pilih Guru --</option>' + data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
+    filterKelasCetak();
+}
+
+// Filter kelas berdasarkan tingkatan di Input Jadwal
+function filterInputByTingkatan() {
+    const tingkatan = document.getElementById('jTingkatan').value;
+    let filteredKelas = data.kelas;
+    if (tingkatan) filteredKelas = data.kelas.filter(k => k.tingkatan === tingkatan);
+    document.getElementById('jKelas').innerHTML = '<option value="">-- Pilih Kelas --</option>' + filteredKelas.map(k => `<option value="${k.nama}">${k.nama} (${k.tingkatan})</option>`).join('');
+}
+
+// Filter kelas di menu Cetak
+function filterKelasCetak() {
+    const tingkatan = document.getElementById('cetakTingkatanKelas').value;
+    let filteredKelas = data.kelas;
+    if (tingkatan) filteredKelas = data.kelas.filter(k => k.tingkatan === tingkatan);
+    document.getElementById('cetakKelasSelect').innerHTML = '<option value="">-- Pilih Kelas --</option>' + filteredKelas.map(k => `<option value="${k.nama}">${k.nama} (${k.tingkatan})</option>`).join('');
 }
 
 // ========== JADWAL ==========
@@ -199,25 +239,26 @@ function tambahJadwal() {
     resetFormJadwal();
 }
 function resetFormJadwal() {
-    ['jGuru','jMapel','jKelas','jRuang'].forEach(id => document.getElementById(id).value = '');
+    ['jGuru','jMapel','jKelas','jRuang','jTingkatan'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('jJam').selectedIndex = -1; document.getElementById('inputStatus').innerHTML = '';
 }
 function renderJadwal() {
     const sorted = [...data.jadwal].sort((a,b) => hariList.indexOf(a.hari)-hariList.indexOf(b.hari) || a.jam-b.jam);
     document.getElementById('tblJadwal').innerHTML = sorted.map(j => {
         const g = data.guru.find(x => x.nip === j.guru), m = data.mapel.find(x => x.kode === j.mapel);
-        return `<tr><td><strong>${j.hari}</strong></td><td>${j.jam} (${waktuMap[j.jam]})</td><td>${j.kelas}</td>
+        const tingkatan = getTingkatanKelas(j.kelas);
+        return `<tr><td><strong>${j.hari}</strong></td><td>${j.jam} (${waktuMap[j.jam]})</td><td><span class="badge badge-tingkatan">${tingkatan}</span></td><td>${j.kelas}</td>
         <td><span class="badge" style="background:${m?m.warna:'#ccc'}">${m?m.nama:j.mapel}</span></td>
         <td>${g?g.nama:'-'}</td><td>${j.ruang}</td><td><span class="badge badge-success">✓ Valid</span></td>
         <td><button class="btn btn-danger btn-sm" onclick="hapusJadwal(${j.id})">Hapus</button></td></tr>`;
-    }).join('') || '<tr><td colspan="8" style="text-align:center;color:#999;">Belum ada jadwal</td></tr>';
+    }).join('') || '<tr><td colspan="9" style="text-align:center;color:#999;">Belum ada jadwal</td></tr>';
 }
 function hapusJadwal(id) { if(confirm('Hapus?')){data.jadwal = data.jadwal.filter(j => j.id !== id); save(); renderJadwal();} }
 
 // ========== LIHAT JADWAL ==========
 function initView() {
     const mode = document.getElementById('viewMode').value, sel = document.getElementById('viewSelect');
-    if (mode === 'kelas') sel.innerHTML = '<option value="">-- Pilih Kelas --</option>' + data.kelas.map(k => `<option value="${k.nama}">${k.nama}</option>`).join('');
+    if (mode === 'kelas') sel.innerHTML = '<option value="">-- Pilih Kelas --</option>' + data.kelas.map(k => `<option value="${k.nama}">${k.nama} (${k.tingkatan})</option>`).join('');
     if (mode === 'guru') sel.innerHTML = '<option value="">-- Pilih Guru --</option>' + data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
     if (mode === 'ruang') sel.innerHTML = '<option value="">-- Pilih Ruangan --</option>' + data.ruang.map(r => `<option value="${r.kode}">${r.nama}</option>`).join('');
     renderView();
@@ -226,7 +267,7 @@ function renderView() {
     const mode = document.getElementById('viewMode').value, val = document.getElementById('viewSelect').value;
     if (!val) { document.getElementById('viewResult').innerHTML = ''; return; }
     let filtered = [], title = '';
-    if (mode === 'kelas') { filtered = data.jadwal.filter(j => j.kelas === val); title = `Jadwal Kelas: ${val}`; }
+    if (mode === 'kelas') { filtered = data.jadwal.filter(j => j.kelas === val); const k = data.kelas.find(x=>x.nama===val); title = `Jadwal Kelas: ${val} (${k?k.tingkatan:''})`; }
     if (mode === 'guru') { filtered = data.jadwal.filter(j => j.guru === val); const g = data.guru.find(x=>x.nip===val); title = `Jadwal Mengajar: ${g?g.nama:val}`; }
     if (mode === 'ruang') { filtered = data.jadwal.filter(j => j.ruang === val); title = `Jadwal Ruangan: ${val}`; }
     filtered.sort((a,b) => hariList.indexOf(a.hari)-hariList.indexOf(b.hari) || a.jam-b.jam);
@@ -240,7 +281,7 @@ function renderView() {
 // ========== MATRIKS ==========
 function initMatrix() {
     const mode = document.getElementById('matrixMode').value, sel = document.getElementById('matrixSelect');
-    if (mode === 'kelas') sel.innerHTML = '<option value="">-- Pilih Kelas --</option>' + data.kelas.map(k => `<option value="${k.nama}">${k.nama}</option>`).join('');
+    if (mode === 'kelas') sel.innerHTML = '<option value="">-- Pilih Kelas --</option>' + data.kelas.map(k => `<option value="${k.nama}">${k.nama} (${k.tingkatan})</option>`).join('');
     else sel.innerHTML = '<option value="">-- Pilih Guru --</option>' + data.guru.map(g => `<option value="${g.nip}">${g.nama}</option>`).join('');
     renderMatrix();
 }
@@ -249,7 +290,7 @@ function renderMatrix() {
     if (!val) { document.getElementById('matrixResult').innerHTML = '<div class="alert alert-info">Silakan pilih ' + (mode==='kelas'?'kelas':'guru') + '.</div>'; return; }
     const jam = [1,2,3,4,5,6,7,8];
     let filtered = [], title = '';
-    if (mode === 'kelas') { filtered = data.jadwal.filter(j => j.kelas === val); title = `Matriks Jadwal Kelas: ${val}`; }
+    if (mode === 'kelas') { filtered = data.jadwal.filter(j => j.kelas === val); const k = data.kelas.find(x=>x.nama===val); title = `Matriks Jadwal Kelas: ${val} (${k?k.tingkatan:''})`; }
     else { filtered = data.jadwal.filter(j => j.guru === val); const guru = data.guru.find(g => g.nip === val); title = `Matriks Jadwal Mengajar: ${guru?guru.nama:val}`; }
     let html = `<h3 style="color:#1e3c72; margin-bottom:15px;">${title}</h3><table class="matrix-table" style="border-collapse:collapse; width:100%;"><thead><tr style="background:#1e3c72; color:white;"><th>Jam / Hari</th>`;
     hariList.forEach(h => html += `<th style="padding:10px;">${h}</th>`);
@@ -273,15 +314,19 @@ function renderMatrix() {
 // ========== CETAK ROSTER PDF ==========
 function previewRoster() {
     const nip = document.getElementById('cetakGuruSelect').value;
-    const btn = document.getElementById('btnDownloadPDF'), tabel = document.getElementById('tabelRosterCetak');
-    if (!nip) { tabel.innerHTML = ''; btn.disabled = true; document.getElementById('namaGuruCetak').innerText = '...................................................'; return; }
+    const btn = document.getElementById('btnDownloadGuru'), tabel = document.getElementById('tabelRosterCetak');
+    if (!nip) { tabel.innerHTML = ''; btn.disabled = true; return; }
     btn.disabled = false;
     const guru = data.guru.find(g => g.nip === nip);
-    document.getElementById('namaGuruCetak').innerText = guru.nama;
+    
+    // Set judul PDF untuk Guru
+    document.getElementById('pdfJudul').innerText = `GURU PON-PES DDI MATTOANGING`;
+    document.getElementById('pdfFooterText').innerText = `ROSTER GURU PON-PES DDI MATTOANGING TAHUN PELAJARAN 2026-2027`;
+    document.getElementById('pdfTeacherLine').innerHTML = `Teacher: <span style="text-decoration: underline; font-weight: bold;">${guru.nama}</span>`;
+    
     const now = new Date();
     document.getElementById('tglCetak').innerText = `${now.getMonth()+1}/${now.getDate()}/${now.getFullYear()}`;
     
-    // Ambil jadwal guru, hapus duplikasi berdasarkan hari+jam
     const jadwalGuru = data.jadwal.filter(j => j.guru === nip);
     const seen = new Set();
     const uniqueJadwal = jadwalGuru.filter(j => {
@@ -304,7 +349,6 @@ function previewRoster() {
                 const k = data.kelas.find(x => x.nama === cell.kelas);
                 const bg = m ? hexToRgba(m.warna, 0.18) : 'rgba(33,150,243,0.15)';
                 const fg = m ? m.warna : '#1565c0';
-                // HANYA Mapel + Kelas, TIDAK ADA Ruangan
                 html += `<td class="filled" style="background:${bg};">
                     <div class="cell-mapel" style="color:${fg};">${m?m.nama:cell.mapel}</div>
                     <div class="cell-kelas">${k?k.nama:cell.kelas}</div>
@@ -317,13 +361,73 @@ function previewRoster() {
     tabel.innerHTML = html;
 }
 
-function downloadPDF() {
+function previewRosterKelas() {
+    const namaKelas = document.getElementById('cetakKelasSelect').value;
+    const btn = document.getElementById('btnDownloadKelas'), tabel = document.getElementById('tabelRosterCetak');
+    if (!namaKelas) { tabel.innerHTML = ''; btn.disabled = true; return; }
+    btn.disabled = false;
+    const kelas = data.kelas.find(k => k.nama === namaKelas);
+    
+    // Set judul PDF untuk Kelas
+    const tingkatan = kelas ? kelas.tingkatan : '';
+    document.getElementById('pdfJudul').innerText = `JADWAL KELAS ${namaKelas} (${tingkatan}) PON-PES DDI MATTOANGING`;
+    document.getElementById('pdfFooterText').innerText = `JADWAL KELAS ${namaKelas} (${tingkatan}) PON-PES DDI MATTOANGING TAHUN PELAJARAN 2026-2027`;
+    document.getElementById('pdfTeacherLine').innerHTML = `Wali Kelas: <span style="text-decoration: underline; font-weight: bold;">${kelas && kelas.wali ? (data.guru.find(g=>g.nip===kelas.wali)?.nama || '-') : '-'}</span>`;
+    
+    const now = new Date();
+    document.getElementById('tglCetak').innerText = `${now.getMonth()+1}/${now.getDate()}/${now.getFullYear()}`;
+    
+    const jadwalKelas = data.jadwal.filter(j => j.kelas === namaKelas);
+    const seen = new Set();
+    const uniqueJadwal = jadwalKelas.filter(j => {
+        const key = `${j.hari}-${j.jam}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    }).sort((a,b) => hariList.indexOf(a.hari)-hariList.indexOf(b.hari) || a.jam-b.jam);
+    
+    let html = '<thead><tr><th class="hari-col">Hari</th>';
+    for (let i = 1; i <= 8; i++) html += `<th class="jam-header">${i}<br>${waktuMap[i]}</th>`;
+    html += '</tr></thead><tbody>';
+    
+    hariList.forEach(hari => {
+        html += `<tr><td class="hari-col">${hari}</td>`;
+        for (let j = 1; j <= 8; j++) {
+            const cell = uniqueJadwal.find(x => x.hari === hari && x.jam == j);
+            if (cell) {
+                const m = data.mapel.find(x => x.kode === cell.mapel);
+                const g = data.guru.find(x => x.nip === cell.guru);
+                const bg = m ? hexToRgba(m.warna, 0.18) : 'rgba(33,150,243,0.15)';
+                const fg = m ? m.warna : '#1565c0';
+                // Untuk kelas: tampilkan Mapel + Guru (bukan Kelas)
+                html += `<td class="filled" style="background:${bg};">
+                    <div class="cell-mapel" style="color:${fg};">${m?m.nama:cell.mapel}</div>
+                    <div class="cell-guru">${g?g.nama:'-'}</div>
+                </td>`;
+            } else html += '<td></td>';
+        }
+        html += '</tr>';
+    });
+    html += '</tbody>';
+    tabel.innerHTML = html;
+}
+
+function downloadPDF(mode) {
     const element = document.getElementById('areaCetakPDF');
-    const guru = data.guru.find(g => g.nip === document.getElementById('cetakGuruSelect').value);
     element.style.display = 'block';
+    
+    let filename = '';
+    if (mode === 'guru') {
+        const guru = data.guru.find(g => g.nip === document.getElementById('cetakGuruSelect').value);
+        filename = `Roster_Guru_${guru.nama.replace(/\s+/g,'_')}.pdf`;
+    } else {
+        const kelas = data.kelas.find(k => k.nama === document.getElementById('cetakKelasSelect').value);
+        filename = `Jadwal_Kelas_${kelas.nama.replace(/\s+/g,'_')}_${kelas.tingkatan}.pdf`;
+    }
+    
     const opt = {
         margin: 10,
-        filename: `Roster_${guru.nama.replace(/\s+/g,'_')}.pdf`,
+        filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff' },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
