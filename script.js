@@ -240,7 +240,13 @@ function tambahJadwal() {
         return;
     }
 
+    // 🚫 VALIDASI JADWAL PATEN (SENIN JAM 1)
     const jamAkhir = jamMulai + jumlahJam - 1;
+    if (hari === 'Senin' && (jamMulai === 1 || jamAkhir >= 1)) {
+        status.innerHTML = '<div class="alert alert-danger">🚫 <strong>JAM DIPATENKAN!</strong> Senin Jam 1 dikhususkan untuk 🇮🇩 UPACARA BENDERA dan tidak dapat dijadwalkan.</div>';
+        return;
+    }
+
     if (jamAkhir > 8) {
         status.innerHTML = `<div class="alert alert-danger">🚫 Blok jam melewati Jam 8! Berakhir di Jam ${jamAkhir} (maksimal Jam 8).</div>`;
         return;
@@ -310,7 +316,19 @@ function updateJamPreview() {
 
 function renderJadwal() {
     const sorted = [...data.jadwal].sort((a,b) => hariList.indexOf(a.hari)-hariList.indexOf(b.hari) || a.jam-b.jam);
+    
+    // Inject jadwal paten Upacara Bendera jika belum ada
+    const hasUpacara = sorted.some(j => j.hari === 'Senin' && j.jam === '1');
+    if (!hasUpacara) {
+        sorted.push({ hari: 'Senin', jam: '1', kelas: 'Semua Kelas', mapel: 'UPACARA BENDERA', guru: 'Seluruh Warga', ruang: 'Lapangan', id: 'upacara_paten', isPaten: true });
+    }
+    // Re-sort setelah inject
+    sorted.sort((a,b) => hariList.indexOf(a.hari)-hariList.indexOf(b.hari) || a.jam-b.jam);
+
     document.getElementById('tblJadwal').innerHTML = sorted.map(j => {
+        if (j.isPaten) {
+            return `<tr style="background:#fff8e1;"><td><strong>Senin</strong></td><td>1 (7:30-8:10)</td><td colspan="4" style="text-align:center; font-weight:bold; color:#e65100; font-size:15px;">🇮🇩 UPACARA BENDERA</td><td>Lapangan</td><td><span class="badge" style="background:#e65100;">Paten</span></td><td>-</td></tr>`;
+        }
         const g = data.guru.find(x => x.nip === j.guru), m = data.mapel.find(x => x.kode === j.mapel);
         const tingkatan = getTingkatanKelas(j.kelas);
         return `<tr><td><strong>${j.hari}</strong></td><td>${j.jam} (${waktuMap[j.jam]})</td><td><span class="badge badge-tingkatan">${tingkatan}</span></td><td>${j.kelas}</td>
@@ -319,7 +337,14 @@ function renderJadwal() {
         <td><button class="btn btn-danger btn-sm" onclick="hapusJadwal(${j.id})">Hapus</button></td></tr>`;
     }).join('') || '<tr><td colspan="9" style="text-align:center;color:#999;">Belum ada jadwal</td></tr>';
 }
-function hapusJadwal(id) { if(confirm('Hapus?')){data.jadwal = data.jadwal.filter(j => j.id !== id); save(); renderJadwal();} }
+
+function hapusJadwal(id) {
+    if (id === 'upacara_paten') {
+        alert('⚠️ Jadwal Upacara Bendera adalah jadwal paten dan tidak dapat dihapus.');
+        return;
+    }
+    if(confirm('Hapus?')){data.jadwal = data.jadwal.filter(j => j.id !== id); save(); renderJadwal();}
+}
 
 // ========== LIHAT JADWAL ==========
 function initView() {
@@ -327,7 +352,6 @@ function initView() {
     const sel = document.getElementById('viewSelect');
     const selGroup = sel.closest('.form-group');
 
-    // Mode kekosongan tidak butuh pilihan objek
     if (mode === 'kekosongan') {
         selGroup.style.display = 'none';
         renderView();
@@ -343,8 +367,6 @@ function initView() {
 
 function renderView() {
     const mode = document.getElementById('viewMode').value;
-
-    // 🔍 MODE ANALISIS KEKOSONGAN
     if (mode === 'kekosongan') { renderKekosongan(); return; }
 
     const val = document.getElementById('viewSelect').value;
@@ -354,12 +376,17 @@ function renderView() {
     if (mode === 'guru') { filtered = data.jadwal.filter(j => j.guru === val); const g = data.guru.find(x=>x.nip===val); title = `Jadwal Mengajar: ${g?g.nama:val}`; }
     if (mode === 'ruang') { filtered = data.jadwal.filter(j => j.ruang === val); title = `Jadwal Ruangan: ${val}`; }
     filtered.sort((a,b) => hariList.indexOf(a.hari)-hariList.indexOf(b.hari) || a.jam-b.jam);
+    
     let html = `<h3 style="color:#1e3c72;">${title}</h3><table><thead><tr><th>Hari</th><th>Jam</th><th>Kelas</th><th>Mapel</th><th>Guru</th><th>Ruangan</th></tr></thead><tbody>`;
     if (filtered.length === 0) html += '<tr><td colspan="6" style="text-align:center;color:#999;">Tidak ada jadwal</td></tr>';
-    filtered.forEach(j => { 
+    
+    filtered.forEach(j => {
+        if (j.hari === 'Senin' && j.jam === '1') {
+            html += `<tr style="background:#fff8e1;"><td><strong>Senin</strong></td><td>1 (7:30-8:10)</td><td>${j.kelas || 'Semua'}</td><td><span class="badge" style="background:#e65100;">🇮🇩 UPACARA BENDERA</span></td><td>Seluruh Warga</td><td>Lapangan</td></tr>`;
+            return;
+        }
         const g = data.guru.find(x => x.nip === j.guru), m = data.mapel.find(x => x.kode === j.mapel);
-        const libur = j.hari === 'Jumat' ? ' style="background:#f8d7da;"' : '';
-        html += `<tr${libur}><td><strong>${j.hari}</strong>${j.hari==='Jumat'?' 🚫':''}</td><td>${j.jam} (${waktuMap[j.jam]})</td><td>${j.kelas}</td><td><span class="badge" style="background:${m?m.warna:'#ccc'}">${m?m.nama:j.mapel}</span></td><td>${g?g.nama:'-'}</td><td>${j.ruang}</td></tr>`; 
+        html += `<tr><td><strong>${j.hari}</strong></td><td>${j.jam} (${waktuMap[j.jam]})</td><td>${j.kelas}</td><td><span class="badge" style="background:${m?m.warna:'#ccc'}">${m?m.nama:j.mapel}</span></td><td>${g?g.nama:'-'}</td><td>${j.ruang}</td></tr>`;
     });
     html += '</tbody></table>';
     document.getElementById('viewResult').innerHTML = html;
@@ -367,7 +394,7 @@ function renderView() {
 
 function renderKekosongan() {
     const container = document.getElementById('viewResult');
-    const totalSlot = HARI_AKTIF.length * 8; // 6 hari x 8 jam = 48
+    const totalSlot = HARI_AKTIF.length * 8; 
 
     let html = `<h3 style="color:#1e3c72;">🔍 Analisis Kekosongan Jadwal</h3>`;
     html += `<div class="alert alert-info">📌 Slot efektif per kelas = <strong>${HARI_AKTIF.length} hari aktif × 8 jam = ${totalSlot} jam pelajaran</strong> (Hari Jumat = 🚫 LIBUR, tidak dihitung).</div>`;
@@ -383,7 +410,6 @@ function renderKekosongan() {
         const kosong = totalSlot - terisi;
         const pct = Math.round((terisi / totalSlot) * 100);
 
-        // Cari daftar slot kosong
         const kosongList = [];
         HARI_AKTIF.forEach(h => {
             for (let jam = 1; jam <= 8; jam++) {
@@ -436,6 +462,13 @@ function renderMatrix() {
         html += `<tr style="background:#f0f2f5;"><th style="padding:8px; text-align:left;">Jam ${j}<br><small>${waktuMap[j]}</small></th>`;
         hariList.forEach(h => {
             if (h === 'Jumat') { html += `<td class="matrix-libur">🚫</td>`; return; }
+            
+            // 🇮🇩 OVERRIDE UPACARA BENDERA
+            if (h === 'Senin' && j === 1) {
+                html += `<td style="padding:8px; background:#fff8e1; color:#e65100; border:1px solid #ddd; vertical-align:top; font-size:11px; font-weight:bold;">🇮🇩 UPACARA<br>BENDERA</td>`;
+                return;
+            }
+
             const cell = filtered.find(x => x.hari === h && parseInt(x.jam) === j);
             if (cell) {
                 const m = data.mapel.find(x => x.kode === cell.mapel), g = data.guru.find(x => x.nip === cell.guru);
@@ -480,6 +513,15 @@ function previewRoster() {
         }
         html += `<tr><td class="hari-col">${hari}</td>`;
         for (let j = 1; j <= 8; j++) {
+            // 🇮🇩 OVERRIDE UPACARA BENDERA
+            if (hari === 'Senin' && j === 1) {
+                html += `<td class="filled" style="background:#fff8e1; border:1px solid #ddd;">
+                    <div class="cell-mapel" style="color:#e65100; font-weight:bold;">🇮🇩 UPACARA<br>BENDERA</div>
+                    <div class="cell-kelas">Lapangan</div>
+                </td>`;
+                continue;
+            }
+
             const cell = uniqueJadwal.find(x => x.hari === hari && parseInt(x.jam) === j);
             if (cell) {
                 const m = data.mapel.find(x => x.kode === cell.mapel);
@@ -531,6 +573,15 @@ function previewRosterKelas() {
         }
         html += `<tr><td class="hari-col">${hari}</td>`;
         for (let j = 1; j <= 8; j++) {
+            // 🇮🇩 OVERRIDE UPACARA BENDERA
+            if (hari === 'Senin' && j === 1) {
+                html += `<td class="filled" style="background:#fff8e1; border:1px solid #ddd;">
+                    <div class="cell-mapel" style="color:#e65100; font-weight:bold;">🇮🇩 UPACARA<br>BENDERA</div>
+                    <div class="cell-guru">Seluruh Warga</div>
+                </td>`;
+                continue;
+            }
+
             const cell = uniqueJadwal.find(x => x.hari === hari && parseInt(x.jam) === j);
             if (cell) {
                 const m = data.mapel.find(x => x.kode === cell.mapel);
