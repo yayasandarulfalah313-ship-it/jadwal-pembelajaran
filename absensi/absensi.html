@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>SIJAB Absensi Guru</title>
+<link rel="stylesheet" href="absensi.css">
+</head>
+<body>
+
+<!-- ============ HALAMAN LOGIN ============ -->
+<div id="loginView" class="screen">
+    <div class="login-card">
+        <div class="login-logo">🕌</div>
+        <h2>SIJAB Absensi</h2>
+        <p class="muted">PON-PES DDI MATTOANGING</p>
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="loginUser" placeholder="Masukkan username">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="loginPass" placeholder="Masukkan password">
+        </div>
+        <div id="loginError" class="error-text"></div>
+        <button class="btn btn-green btn-block" onclick="doLogin()">Masuk</button>
+        <p class="muted small" style="margin-top:15px;">Guru: hubungi admin untuk mendapatkan akun.<br>Admin: gunakan akun administrator.</p>
+    </div>
+</div>
+
+<!-- ============ HALAMAN ADMIN ============ -->
+<div id="adminView" class="screen" style="display:none;">
+    <header class="admin-header">
+        <div><strong>⚙️ Admin SIJAB</strong> <span class="muted">DDI Mattoanging</span></div>
+        <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
+    </header>
+    <nav class="admin-tabs">
+        <button class="atab active" onclick="showAdminTab('atabSijab',this)">📅 SIJAB</button>
+        <button class="atab" onclick="showAdminTab('atabAbsensi',this)">✅ Rekap Absensi</button>
+        <button class="atab" onclick="showAdminTab('atabUsers',this)">👤 Akun Guru</button>
+        <button class="atab" onclick="showAdminTab('atabSync',this)">🔄 Sinkron Sheets</button>
+    </nav>
+
+    <!-- TAB: SIJAB (iframe, tidak diubah sama sekali) -->
+    <div id="atabSijab" class="atab-content active">
+        <iframe id="sijabFrame" src="../index.html" class="sijab-frame"></iframe>
+    </div>
+
+    <!-- TAB: Rekap Absensi -->
+    <div id="atabAbsensi" class="atab-content">
+        <div class="panel">
+            <h3>📋 Data Absensi Guru (DATA 1)</h3>
+            <div class="export-bar">
+                <button class="btn btn-green btn-sm" onclick="exportCSV1()">⬇️ Download CSV DATA 1</button>
+                <button class="btn btn-green btn-sm" onclick="exportCSV2()">⬇️ Download CSV DATA 2</button>
+                <button class="btn btn-outline btn-sm" onclick="renderAbsensiTable()">🔄 Refresh</button>
+                <span id="absensiCount" class="muted"></span>
+            </div>
+            <div class="table-wrap">
+                <table id="tblAbsensiAdmin">
+                    <thead><tr>
+                        <th>Gambar</th><th>Tanggal</th><th>Nama</th><th>Kelas</th>
+                        <th>Jadwal Masuk</th><th>Jadwal Keluar</th><th>Total Jam</th>
+                        <th>Waktu Absensi</th><th>Keterangan</th><th>Lokasi</th>
+                    </tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB: Akun Guru -->
+    <div id="atabUsers" class="atab-content">
+        <div class="panel">
+            <h3>➕ Buat Akun Guru</h3>
+            <p class="muted small">Username &amp; password dibuat manual di sini. Hasilnya dipakai guru untuk login di HP.</p>
+            <div class="form-row">
+                <div class="form-group"><label>Username</label><input type="text" id="newUser" placeholder="misal: afaisal"></div>
+                <div class="form-group"><label>Password</label><input type="text" id="newPass" placeholder="misal: guru123"></div>
+            </div>
+            <div class="form-group"><label>Pilih Guru (dari Data Master SIJAB)</label><select id="newUserGuru"></select></div>
+            <button class="btn btn-green" onclick="addUser()">+ Buat Akun</button>
+            <h3 style="margin-top:20px;">📋 Daftar Akun</h3>
+            <table><thead><tr><th>Username</th><th>Password</th><th>Nama Guru</th><th>Aksi</th></tr></thead>
+            <tbody id="tblUsers"></tbody></table>
+        </div>
+    </div>
+
+    <!-- TAB: Sinkron -->
+    <div id="atabSync" class="atab-content">
+        <div class="panel">
+            <h3>🔄 Koneksi Google Sheets</h3>
+            <p class="muted small">Tempel URL Web App Apps Script (lihat panduan). Data absensi terkirim otomatis ke sheet DATA 1 &amp; DATA 2.</p>
+            <div class="form-group"><label>Apps Script Web App URL</label>
+                <input type="text" id="sheetUrl" placeholder="https://script.google.com/macros/s/XXXX/exec"></div>
+            <button class="btn btn-green" onclick="saveSheetUrl()">💾 Simpan URL</button>
+            <button class="btn btn-outline" onclick="testSync()">🧪 Tes Koneksi</button>
+            <div id="syncStatus"></div>
+            <h3 style="margin-top:20px;">Kirim Semua Data Belum Terkirim</h3>
+            <button class="btn btn-green" onclick="syncAll()">📤 Kirim Sekarang</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============ HALAMAN GURU (mobile, sesuai screenshot) ============ -->
+<div id="guruView" class="screen guru-screen" style="display:none;">
+    <div class="guru-topbar">
+        <div>
+            <span class="muted">Assalamu'alaikum</span>
+            <div class="guru-name" id="guruNama">-</div>
+        </div>
+    </div>
+
+    <!-- TAB: BERANDA -->
+    <div id="tabBeranda" class="guru-tab active">
+        <div class="welcome-card">
+            <div>
+                <h3>Selamat Datang</h3>
+                <p>Silahkan lakukan absensi berdasarkan waktu kehadiran Anda</p>
+            </div>
+            <div class="welcome-icon">🗓️</div>
+        </div>
+
+        <div class="date-card">
+            <div class="date-title" id="todayDate">-</div>
+            <div id="jadwalStatus" class="jadwal-status">-</div>
+            <div id="slotList" class="slot-list"></div>
+            <button class="btn btn-block btn-absen" id="btnMulaiAbsen" onclick="openAbsenModal()" disabled>Mulai Absen</button>
+        </div>
+
+        <h3 class="section-title">Riwayat Kehadiran Hari ini</h3>
+        <div id="riwayatHariIni"></div>
+    </div>
+
+    <!-- TAB: RIWAYAT -->
+    <div id="tabRiwayat" class="guru-tab">
+        <h3 class="section-title">Riwayat Absensi Saya</h3>
+        <div id="riwayatSemua"></div>
+    </div>
+
+    <!-- TAB: PROFIL -->
+    <div id="tabProfil" class="guru-tab">
+        <div class="panel">
+            <h3>👤 Profil</h3>
+            <div id="profilInfo"></div>
+            <button class="btn btn-outline btn-block" style="margin-top:15px;" onclick="logout()">Keluar</button>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav">
+        <button class="bnav active" onclick="showGuruTab('tabBeranda',this)">🏠<span>Beranda</span></button>
+        <button class="bnav" onclick="showGuruTab('tabRiwayat',this)">🕒<span>Riwayat</span></button>
+        <button class="bnav" onclick="showGuruTab('tabProfil',this)">👤<span>Profil</span></button>
+    </nav>
+</div>
+
+<!-- ============ MODAL ABSEN ============ -->
+<div id="absenModal" class="modal" style="display:none;">
+    <div class="modal-box">
+        <h3 id="modalTitle">📸 Absensi Mengajar</h3>
+        <div id="modalInfo" class="muted small"></div>
+
+        <div class="form-group">
+            <label>Foto Selfie</label>
+            <input type="file" id="fotoInput" accept="image/*" capture="user" onchange="previewFoto(event)">
+            <img id="fotoPreview" class="foto-preview" style="display:none;">
+        </div>
+        <div class="form-group">
+            <label>Keterangan</label>
+            <textarea id="ketInput" rows="3" placeholder="Contoh: Mengajar Matematika VII A, materi aljabar..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>Lokasi</label>
+            <div id="lokasiText" class="muted small">Mengambil lokasi...</div>
+        </div>
+
+        <div id="modalError" class="error-text"></div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeAbsenModal()">Batal</button>
+            <button class="btn btn-green" id="btnSimpanAbsen" onclick="simpanAbsen()">💾 Simpan Absen</button>
+        </div>
+    </div>
+</div>
+
+<script src="absensi.js"></script>
+</body>
+</html>
