@@ -4,8 +4,19 @@
 const ADMIN_USER = 'admin';
 const ADMIN_PASS = 'admin123';
 
+const WAKTU_MAP = {
+    '1': { mulai: '7:30', selesai: '8:10' },
+    '2': { mulai: '8:10', selesai: '8:50' },
+    '3': { mulai: '8:50', selesai: '9:30' },
+    '4': { mulai: '9:30', selesai: '10:10' },
+    '5': { mulai: '10:20', selesai: '11:00' },
+    '6': { mulai: '11:00', selesai: '11:40' },
+    '7': { mulai: '11:40', selesai: '12:20' },
+    '8': { mulai: '12:40', selesai: '13:20' }
+};
+
 // ============================================================
-// BACA DATA SIJAB (localStorage - 1 origin dengan SIJAB utama)
+// BACA DATA SIJAB
 // ============================================================
 function getSijabData() {
     try {
@@ -22,9 +33,6 @@ function getSijabData() {
     }
 }
 
-// ============================================================
-// DATA ABSENSI (key terpisah, tidak menabrak SIJAB)
-// ============================================================
 function getAbsensi() { return JSON.parse(localStorage.getItem('sijab_absensi') || '[]'); }
 function setAbsensi(d) { localStorage.setItem('sijab_absensi', JSON.stringify(d)); }
 function getUsers() { return JSON.parse(localStorage.getItem('sijab_users') || '[]'); }
@@ -41,6 +49,16 @@ function getTodayDisplay() {
     const b = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     const n = new Date();
     return `${n.getDate()} ${b[n.getMonth()]} ${n.getFullYear()}`;
+}
+
+function getCurrentTime() {
+    const now = new Date();
+    return `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+}
+
+function timeToMinutes(timeStr) {
+    const [h, m] = timeStr.split(':').map(Number);
+    return h * 60 + m;
 }
 
 // ============================================================
@@ -88,7 +106,7 @@ function loadAdminData() {
     sel.innerHTML = data.guru.length
         ? '<option value="">-- Pilih Guru dari SIJAB --</option>' +
           data.guru.map(g => `<option value="${g.nip}">${g.nama} (${g.nip})</option>`).join('')
-        : '<option value="">⚠️ Belum ada guru di SIJAB. Buka SIJAB dulu dan input Data Master Guru.</option>';
+        : '<option value="">⚠️ Belum ada guru di SIJAB.</option>';
 
     document.getElementById('sheetUrl').value = localStorage.getItem('sijab_sheet_url') || '';
     renderUserTable();
@@ -129,7 +147,7 @@ function renderUserTable() {
             <td><strong>${u.username}</strong></td>
             <td>${u.password}</td>
             <td>${u.namaGuru}</td>
-            <td><button class="btn-danger btn-sm" onclick="deleteUser('${u.username}')">Hapus</button></td>
+            <td><button class="btn btn-danger btn-sm" onclick="deleteUser('${u.username}')">Hapus</button></td>
         </tr>`).join('') ||
         '<tr><td colspan="4" style="text-align:center;color:#999;">Belum ada akun guru</td></tr>';
 }
@@ -185,134 +203,214 @@ function exportCSV2() {
 }
 
 // ============================================================
-// GURU
+// GURU - TAMPILAN BARU
 // ============================================================
+function showGuruTab(tabId, el) {
+    document.querySelectorAll('.guru-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    document.querySelectorAll('.bnav').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    if (tabId === 'tabRiwayat') renderRiwayatSemua();
+    if (tabId === 'tabProfil') renderProfil();
+}
+
+function slotHariIni(nip) {
+    const sj = getSijabData();
+    return sj.jadwal.filter(j => j.guru === nip && j.hari === getTodayName()).sort((a,b) => a.jam - b.jam);
+}
+
 function loadGuruData() {
     const s = getSession();
-    document.getElementById('guruNameDisplay').textContent = s.nama;
-    document.getElementById('todayDate').textContent = getTodayName() + ', ' + getTodayDisplay();
+    document.getElementById('guruNameDisplay').textContent = s.nama.toUpperCase();
+    document.getElementById('todayDate').textContent = getTodayDisplay();
 
-    const data = getSijabData();
-    const hariIni = getTodayName();
-    const jadwalHariIni = data.jadwal
-        .filter(j => j.guru === s.nip && j.hari === hariIni)
-        .sort((a, b) => parseInt(a.jam) - parseInt(b.jam));
-
+    const slots = slotHariIni(s.nip);
     const status = document.getElementById('jadwalStatus');
+    const btn = document.getElementById('btnMulaiAbsen');
     const list = document.getElementById('scheduleList');
-    const select = document.getElementById('absenJadwalSelect');
 
     list.innerHTML = '';
-    select.innerHTML = '<option value="">-- Pilih Jadwal --</option>';
 
-    if (jadwalHariIni.length === 0) {
+    if (slots.length === 0) {
         status.textContent = 'Belum ada jadwal';
-        status.className = 'jadwal-status';
-        list.innerHTML = '<p class="hint">Tidak ada jadwal mengajar hari ini.</p>';
-        select.innerHTML = '<option value="">Tidak ada jadwal</option>';
-        select.disabled = true;
+        status.className = 'no-jadwal';
+        btn.disabled = true;
+        btn.className = 'btn-absen';
+        btn.textContent = 'Mulai Absen';
     } else {
-        status.textContent = `Hari ini Anda mengajar ${jadwalHariIni.length} jam`;
-        status.className = 'jadwal-status ada';
-        jadwalHariIni.forEach(j => {
-            const m = data.mapel.find(x => x.kode === j.mapel);
-            list.innerHTML += `<div class="schedule-item">Jam ${j.jam} • ${m ? m.nama : j.mapel} • ${j.kelas}</div>`;
-            select.innerHTML += `<option value="${j.id}">Jam ${j.jam} - ${j.kelas} (${m ? m.nama : j.mapel})</option>`;
+        const waktu = WAKTU_MAP[String(slots[0].jam)];
+        const keluar = WAKTU_MAP[String(slots[slots.length-1].jam)];
+        status.textContent = `Hari ini Anda mengajar ${slots.length} jam — ${waktu.mulai} s/d ${keluar.selesai}`;
+        status.className = 'has-jadwal';
+
+        slots.forEach(j => {
+            const m = getSijabData().mapel.find(x => x.kode === j.mapel);
+            list.innerHTML += `<div class="schedule-item"><span>Jam ${j.jam} (${WAKTU_MAP[String(j.jam)].mulai}-${WAKTU_MAP[String(j.jam)].selesai})</span><span>${m ? m.nama : j.mapel} • ${j.kelas}</span></div>`;
         });
-        select.disabled = false;
+
+        const sudah = getAbsensi().find(r => r.nip === s.nip && r.tanggal === getTodayISO());
+        if (sudah && sudah.waktuKeluar) {
+            btn.disabled = true;
+            btn.textContent = '✅ Sudah Absen Penuh';
+            btn.className = 'btn-absen enabled';
+        } else if (sudah) {
+            btn.disabled = false;
+            btn.textContent = 'Selesai Absen (Pulang)';
+            btn.className = 'btn-absen enabled';
+        } else {
+            btn.disabled = false;
+            btn.textContent = 'Mulai Absen';
+            btn.className = 'btn-absen enabled';
+        }
     }
-    renderRiwayatGuru();
+    renderRiwayatHariIni();
 }
 
-function renderRiwayatGuru() {
+function renderRiwayatHariIni() {
+    const s = getSession();
+    const rows = getAbsensi().filter(r => r.nip === s.nip && r.tanggal === getTodayISO());
+    document.getElementById('riwayatHariIni').innerHTML = rows.length ? rows.map(riwCard).join('')
+        : `<div class="empty-state">
+            <svg width="120" height="100" viewBox="0 0 120 100">
+                <rect x="20" y="40" width="80" height="50" rx="5" fill="#e0e0e0"/>
+                <rect x="30" y="30" width="60" height="20" rx="3" fill="#f5f5f5" stroke="#bdbdbd" stroke-width="1"/>
+                <line x1="40" y1="50" x2="80" y2="50" stroke="#bdbdbd" stroke-width="2"/>
+                <line x1="40" y1="60" x2="70" y2="60" stroke="#bdbdbd" stroke-width="2"/>
+                <line x1="40" y1="70" x2="75" y2="70" stroke="#bdbdbd" stroke-width="2"/>
+                <circle cx="90" cy="25" r="12" fill="#e0e0e0"/>
+                <circle cx="85" cy="25" r="2" fill="#9e9e9e"/>
+                <circle cx="90" cy="25" r="2" fill="#9e9e9e"/>
+                <circle cx="95" cy="25" r="2" fill="#9e9e9e"/>
+            </svg>
+            <p>Tidak ada data</p>
+           </div>`;
+}
+
+function riwCard(r) {
+    return `<div class="riw-card">
+        <div class="top"><span>${r.kelas}</span><span>Jam ${r.jam}</span></div>
+        <div class="row">Masuk: ${r.waktuAbsensi} ${r.waktuKeluar ? '| Pulang: ' + r.waktuKeluar : '| (belum pulang)'}</div>
+        <div class="row">Keterangan: ${r.keterangan}</div>
+        ${r.foto ? `<img src="${r.foto}" style="max-height:120px;margin-top:8px;border-radius:8px;">` : ''}
+    </div>`;
+}
+
+function renderRiwayatSemua() {
     const s = getSession();
     const rows = getAbsensi().filter(r => r.nip === s.nip).reverse();
-    document.getElementById('riwayatGuru').innerHTML = rows.length ? rows.map(r => `
-        <div class="riw-card">
-            <div class="top"><span>${r.kelas}</span><span>Jam ${r.jam}</span></div>
-            <div class="row">📅 ${r.tanggal}</div>
-            <div class="row">📝 ${r.keterangan}</div>
-        </div>`).join('') : '<div class="empty-state">📭 Tidak ada data</div>';
+    document.getElementById('riwayatSemua').innerHTML = rows.length ? rows.map(riwCard).join('')
+        : `<div class="empty-state"><p>📭 Belum ada riwayat</p></div>`;
 }
 
-function previewImage(input) {
-    const preview = document.getElementById('fotoPreview');
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = e => { preview.src = e.target.result; preview.style.display = 'block'; };
-        reader.readAsDataURL(input.files[0]);
-    }
-}
-
-async function submitAbsensi() {
+function renderProfil() {
     const s = getSession();
-    const jadwalId = document.getElementById('absenJadwalSelect').value;
-    const fotoInput = document.getElementById('fotoInput');
-    const keterangan = document.getElementById('ketInput').value.trim();
-    const err = document.getElementById('absenError');
-    const statusMsg = document.getElementById('absenStatus');
-    err.textContent = '';
+    const g = getSijabData().guru.find(x => x.nip === s.nip);
+    document.getElementById('profilInfo').innerHTML = `
+        <p><strong>Nama:</strong> ${s.nama}</p>
+        <p><strong>NIP:</strong> ${s.nip}</p>
+        <p><strong>Username:</strong> ${s.username}</p>
+        <p><strong>Bidang Studi:</strong> ${g ? g.mapel.join(', ') : '-'}</p>`;
+}
 
-    if (!jadwalId) return err.textContent = '⚠️ Pilih jadwal terlebih dahulu!';
-    if (!fotoInput.files[0]) return err.textContent = '⚠️ Foto selfie wajib diisi!';
-    if (!keterangan) return err.textContent = '⚠️ Keterangan wajib diisi!';
+// ============================================================
+// MODAL ABSEN
+// ============================================================
+let currentFoto = '';
 
-    const data = getSijabData();
-    const jadwal = data.jadwal.find(j => j.id == jadwalId);
-    if (!jadwal) return err.textContent = '⚠️ Jadwal tidak ditemukan!';
+function openAbsenModal() {
+    const s = getSession();
+    const slots = slotHariIni(s.nip);
+    if (slots.length === 0) return alert('Tidak ada jadwal hari ini.');
 
-    const sheetUrl = localStorage.getItem('sijab_sheet_url');
-    statusMsg.textContent = '⏳ Mengirim data...';
+    const sudah = getAbsensi().find(r => r.nip === s.nip && r.tanggal === getTodayISO());
+    if (sudah && sudah.waktuKeluar) return alert('Absensi hari ini sudah lengkap.');
 
+    document.getElementById('modalTitle').textContent = sudah ? '🕒 Absen Pulang' : '📸 Absensi Mengajar';
+    document.getElementById('modalInfo').textContent = `${getTodayName()} • ${slots.length} jam`;
+    document.getElementById('btnSimpanAbsen').textContent = sudah ? '💾 Simpan Pulang' : '💾 Simpan Absen';
+    document.getElementById('modalError').textContent = '';
+    document.getElementById('ketInput').value = sudah ? sudah.keterangan : '';
+    document.getElementById('fotoInput').style.display = sudah ? 'none' : 'block';
+    document.getElementById('fotoPreview').style.display = sudah ? 'block' : 'none';
+    if (sudah) document.getElementById('fotoPreview').src = sudah.foto;
+    currentFoto = '';
+    ambilLokasi();
+    document.getElementById('absenModal').style.display = 'flex';
+}
+
+function closeAbsenModal() {
+    document.getElementById('absenModal').style.display = 'none';
+}
+
+function previewFoto(e) {
+    const f = e.target.files[0];
+    if (!f) return;
     const reader = new FileReader();
-    reader.onload = async function(e) {
-        const fotoBase64 = e.target.result;
-        const payload = {
-            tanggal: getTodayISO(),
-            nama: s.nama,
-            nip: s.nip,
-            kelas: jadwal.kelas,
-            jam: jadwal.jam,
-            keterangan: keterangan,
-            foto: fotoBase64
-        };
-
-        // Simpan lokal
-        const rows = getAbsensi();
-        rows.push(payload);
-        setAbsensi(rows);
-
-        // Kirim ke Sheets
-        if (sheetUrl) {
-            try {
-                const res = await fetch(sheetUrl, { method: 'POST', body: JSON.stringify(payload) });
-                const result = await res.json();
-                if (result.status === 'success') {
-                    statusMsg.textContent = '✅ Absensi tersimpan & terkirim ke Sheets!';
-                } else {
-                    statusMsg.textContent = '⚠️ Tersimpan lokal, tapi gagal kirim: ' + result.message;
-                }
-            } catch (e) {
-                statusMsg.textContent = '⚠️ Tersimpan lokal, tapi gagal kirim ke Sheets.';
-            }
-        } else {
-            statusMsg.textContent = '✅ Absensi tersimpan lokal (URL Sheets belum diatur admin).';
-        }
-
-        // Reset form
-        fotoInput.value = '';
-        document.getElementById('fotoPreview').style.display = 'none';
-        document.getElementById('ketInput').value = '';
-        const select = document.getElementById('absenJadwalSelect');
-        select.remove(select.selectedIndex);
-        if (select.options.length <= 1) {
-            select.innerHTML = '<option value="">✅ Semua jadwal sudah diabsen</option>';
-            select.disabled = true;
-        }
-        renderRiwayatGuru();
-        setTimeout(() => { statusMsg.textContent = ''; }, 4000);
+    reader.onload = ev => {
+        currentFoto = ev.target.result;
+        const img = document.getElementById('fotoPreview');
+        img.src = currentFoto;
+        img.style.display = 'block';
     };
-    reader.readAsDataURL(fotoInput.files[0]);
+    reader.readAsDataURL(f);
+}
+
+function ambilLokasi() {
+    const box = document.getElementById('lokasiText');
+    if (!navigator.geolocation) { box.textContent = 'GPS tidak didukung'; return; }
+    navigator.geolocation.getCurrentPosition(
+        pos => { box.textContent = `📍 ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`; },
+        () => { box.textContent = '📍 Lokasi tidak tersedia'; },
+        { timeout: 8000 }
+    );
+}
+
+function simpanAbsen() {
+    const s = getSession();
+    const slots = slotHariIni(s.nip);
+    const ket = document.getElementById('ketInput').value.trim();
+    const lokasi = document.getElementById('lokasiText').textContent.replace('📍 ', '');
+    const now = new Date();
+    const waktu = `${getTodayISO()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    const err = document.getElementById('modalError');
+
+    const rows = getAbsensi();
+    const sudah = rows.find(r => r.nip === s.nip && r.tanggal === getTodayISO());
+
+    if (sudah) {
+        sudah.waktuKeluar = waktu;
+        setAbsensi(rows);
+        closeAbsenModal();
+        loadGuruData();
+        alert('✅ Absen pulang tersimpan!');
+        return;
+    }
+
+    if (!currentFoto) { err.textContent = '⚠️ Wajib foto selfie!'; return; }
+    if (!ket) { err.textContent = '⚠️ Keterangan wajib diisi!'; return; }
+
+    rows.push({
+        id: Date.now(),
+        nip: s.nip,
+        nama: s.nama,
+        tanggal: getTodayISO(),
+        hari: getTodayName(),
+        kelas: [...new Set(slots.map(j => j.kelas))],
+        jamList: slots.map(j => j.jam),
+        jadwalMasuk: WAKTU_MAP[String(slots[0].jam)].mulai,
+        jadwalKeluar: WAKTU_MAP[String(slots[slots.length-1].jam)].selesai,
+        totalJam: slots.length,
+        waktuAbsensi: waktu,
+        waktuKeluar: null,
+        foto: currentFoto,
+        keterangan: ket,
+        lokasi,
+        synced: false
+    });
+    setAbsensi(rows);
+    closeAbsenModal();
+    loadGuruData();
+    alert('✅ Absensi tersimpan!');
 }
 
 // ============================================================
@@ -322,4 +420,7 @@ window.addEventListener('load', () => {
     const data = getSijabData();
     console.log('📊 Data SIJAB terbaca:', data.guru.length, 'guru,', data.jadwal.length, 'jadwal');
     route();
+});
+window.addEventListener('storage', () => {
+    if (getSession()?.role === 'guru') loadGuruData();
 });
