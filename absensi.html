@@ -100,17 +100,29 @@
 
             <div class="card">
                 <h4>📸 Form Absensi Mengajar</h4>
+                
+                <!-- Status Waktu Real-time -->
+                <div id="timeStatus" class="time-status">
+                    <span class="clock">🕐 <span id="currentTime">--:--:--</span></span>
+                    <span id="absenStatusText" class="status-text">Memeriksa jadwal...</span>
+                </div>
+
                 <div id="absenError" class="error"></div>
+                
                 <label>Pilih Jadwal:</label>
                 <select id="absenJadwalSelect">
                     <option value="">-- Pilih Jadwal --</option>
                 </select>
-                <label>Foto Selfie (Wajib):</label>
+                
+                <!-- KAMERA LANGSUNG (BUKAN GALERI) -->
+                <label>📷 Foto Selfie (Wajib - Kamera Langsung):</label>
                 <input type="file" id="fotoInput" accept="image/*" capture="user" onchange="previewImage(this)">
                 <img id="fotoPreview" class="preview-img">
+                
                 <label>Keterangan Pembelajaran:</label>
                 <textarea id="ketInput" rows="3" placeholder="Contoh: Mengajar Bab 1, materi berjalan lancar..."></textarea>
-                <button onclick="submitAbsensi()" class="btn-success" style="width:100%; margin-top:10px;">📤 Kirim Absensi</button>
+                
+                <button onclick="submitAbsensi()" class="btn-success" id="btnSubmitAbsen" style="width:100%; margin-top:10px;">📤 Kirim Absensi</button>
                 <p id="absenStatus" class="success"></p>
             </div>
 
