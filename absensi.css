@@ -67,9 +67,75 @@ textarea { resize: vertical; }
 .success { color: #28a745; font-size: 13px; margin-top: 8px; min-height: 18px; }
 .hint { font-size: 12px; color: #666; margin: 6px 0; }
 
+/* ===== STATUS WAKTU REAL-TIME (BARU) ===== */
+.time-status {
+    background: #e8f5e9;
+    border-left: 4px solid #1b5e20;
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.time-status .clock {
+    font-size: 18px;
+    font-weight: bold;
+    color: #1b5e20;
+}
+.time-status .status-text {
+    font-size: 13px;
+    color: #555;
+}
+.time-status.closed {
+    background: #ffebee;
+    border-left-color: #c62828;
+}
+.time-status.closed .clock {
+    color: #c62828;
+}
+.time-status.open {
+    background: #e8f5e9;
+    border-left-color: #1b5e20;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* ===== KAMERA LANGSUNG (BARU) ===== */
+#fotoInput {
+    background: #f0f4f8;
+    padding: 15px;
+    border: 2px dashed #1b5e20;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    margin: 10px 0;
+}
+#fotoInput::file-selector-button {
+    background: #1b5e20;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-right: 10px;
+}
+#fotoInput::file-selector-button:hover {
+    background: #2e7d32;
+}
+
+/* ===== RESPONSIVE ===== */
 @media (max-width: 600px) {
     .form-row { flex-direction: column; }
     .form-row input, .form-row select { min-width: 100%; }
     .app-header h3 { font-size: 15px; }
     .welcome-icon { font-size: 36px; }
+    .time-status { flex-direction: column; align-items: flex-start; }
+    .time-status .clock { font-size: 16px; }
 }
