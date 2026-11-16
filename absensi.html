@@ -24,7 +24,7 @@
 
     <!-- HALAMAN ADMIN -->
     <div id="adminPage" class="page">
-        <header class="app-header">
+        <header class="admin-header">
             <h3>⚙️ Panel Admin</h3>
             <button onclick="logout()" class="btn-danger btn-sm">Keluar</button>
         </header>
@@ -74,61 +74,149 @@
         </div>
     </div>
 
-    <!-- HALAMAN GURU -->
+    <!-- HALAMAN GURU (TAMPILAN BARU SESUAI SCREENSHOT) -->
     <div id="guruPage" class="page">
-        <header class="app-header">
-            <div>
-                <p class="greeting">Assalamu'alaikum</p>
-                <h3 id="guruNameDisplay">Halo, Guru</h3>
-            </div>
-            <button onclick="logout()" class="btn-danger btn-sm">Keluar</button>
-        </header>
-        <div class="container">
-            <div class="card welcome-card">
-                <div>
-                    <h4>Selamat Datang</h4>
-                    <p>Silahkan lakukan absensi berdasarkan waktu kehadiran Anda</p>
+        <!-- HEADER HIJAU -->
+        <div class="guru-header">
+            <p class="greeting">Assalamu'alaikum</p>
+            <h3 id="guruNameDisplay">A FAISAL ISMAIL</h3>
+        </div>
+
+        <!-- TAB BERANDA -->
+        <div id="tabBeranda" class="guru-tab active">
+            <div class="container">
+                <!-- CARD SELAMAT DATANG -->
+                <div class="welcome-card">
+                    <div class="welcome-text">
+                        <h3>Selamat Datang</h3>
+                        <p>Silahkan lakukan absensi berdasarkan waktu kehadiran Anda</p>
+                    </div>
+                    <div class="welcome-illustration">
+                        <svg width="120" height="100" viewBox="0 0 120 100">
+                            <!-- Kalender -->
+                            <rect x="10" y="10" width="70" height="80" rx="5" fill="#fff" stroke="#1b5e20" stroke-width="2"/>
+                            <rect x="10" y="10" width="70" height="20" rx="5" fill="#1b5e20"/>
+                            <circle cx="25" cy="15" r="3" fill="#fff"/>
+                            <circle cx="40" cy="15" r="3" fill="#fff"/>
+                            <circle cx="55" cy="15" r="3" fill="#fff"/>
+                            <circle cx="70" cy="15" r="3" fill="#fff"/>
+                            <!-- Grid kalender -->
+                            <rect x="15" y="35" width="12" height="10" fill="#4caf50" rx="2"/>
+                            <rect x="30" y="35" width="12" height="10" fill="#e0e0e0" rx="2"/>
+                            <rect x="45" y="35" width="12" height="10" fill="#4caf50" rx="2"/>
+                            <rect x="60" y="35" width="12" height="10" fill="#e0e0e0" rx="2"/>
+                            <rect x="15" y="50" width="12" height="10" fill="#e0e0e0" rx="2"/>
+                            <rect x="30" y="50" width="12" height="10" fill="#4caf50" rx="2"/>
+                            <rect x="45" y="50" width="12" height="10" fill="#e0e0e0" rx="2"/>
+                            <rect x="60" y="50" width="12" height="10" fill="#4caf50" rx="2"/>
+                            <rect x="15" y="65" width="12" height="10" fill="#4caf50" rx="2"/>
+                            <rect x="30" y="65" width="12" height="10" fill="#e0e0e0" rx="2"/>
+                            <rect x="45" y="65" width="12" height="10" fill="#4caf50" rx="2"/>
+                            <rect x="60" y="65" width="12" height="10" fill="#e0e0e0" rx="2"/>
+                            <!-- Jam -->
+                            <circle cx="95" cy="60" r="20" fill="#ff9800" stroke="#e65100" stroke-width="2"/>
+                            <circle cx="95" cy="60" r="15" fill="#fff"/>
+                            <line x1="95" y1="60" x2="95" y2="50" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+                            <line x1="95" y1="60" x2="103" y2="60" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+                            <circle cx="95" cy="60" r="2" fill="#333"/>
+                            <!-- Orang -->
+                            <circle cx="50" cy="75" r="5" fill="#4caf50"/>
+                            <rect x="47" y="80" width="6" height="15" fill="#4caf50" rx="2"/>
+                        </svg>
+                    </div>
                 </div>
-                <div class="welcome-icon">🗓️</div>
-            </div>
 
-            <div class="card">
-                <div class="date-title" id="todayDate">-</div>
-                <div id="jadwalStatus" class="jadwal-status">-</div>
-                <div id="scheduleList" class="schedule-list"></div>
-            </div>
-
-            <div class="card">
-                <h4>📸 Form Absensi Mengajar</h4>
-                
-                <!-- Status Waktu Real-time -->
-                <div id="timeStatus" class="time-status">
-                    <span class="clock">🕐 <span id="currentTime">--:--:--</span></span>
-                    <span id="absenStatusText" class="status-text">Memeriksa jadwal...</span>
+                <!-- CARD JADWAL HARI INI -->
+                <div class="schedule-card">
+                    <div class="schedule-header">
+                        <h3 id="todayDate">16 November 2026</h3>
+                        <p id="jadwalStatus" class="no-jadwal">Belum ada jadwal</p>
+                    </div>
+                    <div id="scheduleList" class="schedule-list"></div>
+                    <button id="btnMulaiAbsen" class="btn-absen" disabled>Mulai Absen</button>
                 </div>
 
-                <div id="absenError" class="error"></div>
-                
-                <label>Pilih Jadwal:</label>
-                <select id="absenJadwalSelect">
-                    <option value="">-- Pilih Jadwal --</option>
-                </select>
-                
-                <!-- KAMERA LANGSUNG (BUKAN GALERI) -->
-                <label>📷 Foto Selfie (Wajib - Kamera Langsung):</label>
-                <input type="file" id="fotoInput" accept="image/*" capture="user" onchange="previewImage(this)">
-                <img id="fotoPreview" class="preview-img">
-                
-                <label>Keterangan Pembelajaran:</label>
+                <!-- RIWAYAT KEHADIRAN HARI INI -->
+                <h3 class="section-title">Riwayat Kehadiran Hari ini</h3>
+                <div id="riwayatHariIni" class="empty-state">
+                    <svg width="120" height="100" viewBox="0 0 120 100">
+                        <!-- Inbox -->
+                        <rect x="20" y="40" width="80" height="50" rx="5" fill="#e0e0e0"/>
+                        <rect x="30" y="30" width="60" height="20" rx="3" fill="#f5f5f5" stroke="#bdbdbd" stroke-width="1"/>
+                        <line x1="40" y1="50" x2="80" y2="50" stroke="#bdbdbd" stroke-width="2"/>
+                        <line x1="40" y1="60" x2="70" y2="60" stroke="#bdbdbd" stroke-width="2"/>
+                        <line x1="40" y1="70" x2="75" y2="70" stroke="#bdbdbd" stroke-width="2"/>
+                        <!-- Bubble chat -->
+                        <circle cx="90" cy="25" r="12" fill="#e0e0e0"/>
+                        <circle cx="85" cy="25" r="2" fill="#9e9e9e"/>
+                        <circle cx="90" cy="25" r="2" fill="#9e9e9e"/>
+                        <circle cx="95" cy="25" r="2" fill="#9e9e9e"/>
+                    </svg>
+                    <p>Tidak ada data</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB RIWAYAT -->
+        <div id="tabRiwayat" class="guru-tab">
+            <div class="container">
+                <h3 class="section-title">Riwayat Absensi Saya</h3>
+                <div id="riwayatSemua"></div>
+            </div>
+        </div>
+
+        <!-- TAB PROFIL -->
+        <div id="tabProfil" class="guru-tab">
+            <div class="container">
+                <div class="card">
+                    <h4>👤 Profil</h4>
+                    <div id="profilInfo"></div>
+                    <button class="btn-outline btn-block" style="margin-top:15px;" onclick="logout()">Keluar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM NAVIGATION -->
+        <nav class="bottom-nav">
+            <button class="bnav active" onclick="showGuruTab('tabBeranda',this)">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                <span>Beranda</span>
+            </button>
+            <button class="bnav" onclick="showGuruTab('tabRiwayat',this)">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+                <span>Riwayat</span>
+            </button>
+            <button class="bnav" onclick="showGuruTab('tabProfil',this)">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                <span>Profil</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- MODAL ABSEN -->
+    <div id="absenModal" class="modal" style="display:none;">
+        <div class="modal-box">
+            <h3 id="modalTitle">📸 Absensi Mengajar</h3>
+            <div id="modalInfo" class="muted small"></div>
+
+            <div class="form-group">
+                <label>Foto Selfie</label>
+                <input type="file" id="fotoInput" accept="image/*" capture="user" onchange="previewFoto(event)">
+                <img id="fotoPreview" class="foto-preview" style="display:none;">
+            </div>
+            <div class="form-group">
+                <label>Keterangan</label>
                 <textarea id="ketInput" rows="3" placeholder="Contoh: Mengajar Bab 1, materi berjalan lancar..."></textarea>
-                
-                <button onclick="submitAbsensi()" class="btn-success" id="btnSubmitAbsen" style="width:100%; margin-top:10px;">📤 Kirim Absensi</button>
-                <p id="absenStatus" class="success"></p>
+            </div>
+            <div class="form-group">
+                <label>Lokasi</label>
+                <div id="lokasiText" class="muted small">Mengambil lokasi...</div>
             </div>
 
-            <div class="card">
-                <h4>📋 Riwayat Absensi Saya</h4>
-                <div id="riwayatGuru"></div>
+            <div id="modalError" class="error"></div>
+            <div class="modal-actions">
+                <button class="btn-outline" onclick="closeAbsenModal()">Batal</button>
+                <button class="btn-primary" id="btnSimpanAbsen" onclick="simpanAbsen()">💾 Simpan Absen</button>
             </div>
         </div>
     </div>
