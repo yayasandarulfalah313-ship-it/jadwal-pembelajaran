@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SIJAB - Absensi Guru</title>
+    <link rel="stylesheet" href="absensi.css">
+</head>
+<body>
+
+    <!-- HALAMAN LOGIN -->
+    <div id="loginPage" class="page active">
+        <div class="login-card">
+            <div class="login-logo">🕌</div>
+            <h2>SIJAB Absensi</h2>
+            <p class="subtitle">PON-PES DDI MATTOANGING</p>
+            <input type="text" id="loginUser" placeholder="Username" autocomplete="off">
+            <input type="password" id="loginPass" placeholder="Password">
+            <button onclick="handleLogin()">Masuk</button>
+            <p id="loginError" class="error"></p>
+            <p class="hint">Admin: <code>admin</code> / <code>admin123</code></p>
+        </div>
+    </div>
+
+    <!-- HALAMAN ADMIN -->
+    <div id="adminPage" class="page">
+        <header class="app-header">
+            <h3>⚙️ Panel Admin</h3>
+            <button onclick="logout()" class="btn-danger btn-sm">Keluar</button>
+        </header>
+        <div class="container">
+            <div class="card">
+                <h4>👤 Kelola Akun Guru</h4>
+                <p class="hint">Nama guru otomatis diambil dari Data Master SIJAB.</p>
+                <div class="form-row">
+                    <select id="newNipSelect" style="flex:2;">
+                        <option value="">-- Pilih Guru dari SIJAB --</option>
+                    </select>
+                    <input type="text" id="newUser" placeholder="Username" style="flex:1;">
+                    <input type="text" id="newPass" placeholder="Password" style="flex:1;">
+                </div>
+                <button onclick="addUser()" class="btn-primary" style="margin-top:10px; width:100%;">+ Tambah Akun Guru</button>
+                <table id="userTable">
+                    <thead><tr><th>Username</th><th>Password</th><th>Nama Guru</th><th>Aksi</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h4>🔗 Konfigurasi Google Sheets</h4>
+                <p class="hint">Tempel URL Apps Script Web App (berakhiran <code>/exec</code>).</p>
+                <input type="text" id="sheetUrl" placeholder="https://script.google.com/macros/s/.../exec">
+                <button onclick="saveConfig()" class="btn-primary" style="margin-top:10px; width:100%;">💾 Simpan URL</button>
+                <p id="configStatus" class="success"></p>
+            </div>
+
+            <div class="card">
+                <h4>📊 Rekap Absensi</h4>
+                <div class="export-bar">
+                    <button onclick="exportCSV1()" class="btn-success btn-sm">⬇️ Download CSV DATA 1</button>
+                    <button onclick="exportCSV2()" class="btn-success btn-sm">⬇️ Download CSV DATA 2</button>
+                    <span id="absensiCount" class="hint"></span>
+                </div>
+                <div class="table-wrap">
+                    <table id="absensiTable">
+                        <thead><tr>
+                            <th>Tanggal</th><th>Nama</th><th>NIP</th><th>Kelas</th>
+                            <th>Jam</th><th>Keterangan</th>
+                        </tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HALAMAN GURU -->
+    <div id="guruPage" class="page">
+        <header class="app-header">
+            <div>
+                <p class="greeting">Assalamu'alaikum</p>
+                <h3 id="guruNameDisplay">Halo, Guru</h3>
+            </div>
+            <button onclick="logout()" class="btn-danger btn-sm">Keluar</button>
+        </header>
+        <div class="container">
+            <div class="card welcome-card">
+                <div>
+                    <h4>Selamat Datang</h4>
+                    <p>Silahkan lakukan absensi berdasarkan waktu kehadiran Anda</p>
+                </div>
+                <div class="welcome-icon">🗓️</div>
+            </div>
+
+            <div class="card">
+                <div class="date-title" id="todayDate">-</div>
+                <div id="jadwalStatus" class="jadwal-status">-</div>
+                <div id="scheduleList" class="schedule-list"></div>
+            </div>
+
+            <div class="card">
+                <h4>📸 Form Absensi Mengajar</h4>
+                <div id="absenError" class="error"></div>
+                <label>Pilih Jadwal:</label>
+                <select id="absenJadwalSelect">
+                    <option value="">-- Pilih Jadwal --</option>
+                </select>
+                <label>Foto Selfie (Wajib):</label>
+                <input type="file" id="fotoInput" accept="image/*" capture="user" onchange="previewImage(this)">
+                <img id="fotoPreview" class="preview-img">
+                <label>Keterangan Pembelajaran:</label>
+                <textarea id="ketInput" rows="3" placeholder="Contoh: Mengajar Bab 1, materi berjalan lancar..."></textarea>
+                <button onclick="submitAbsensi()" class="btn-success" style="width:100%; margin-top:10px;">📤 Kirim Absensi</button>
+                <p id="absenStatus" class="success"></p>
+            </div>
+
+            <div class="card">
+                <h4>📋 Riwayat Absensi Saya</h4>
+                <div id="riwayatGuru"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="absensi.js"></script>
+</body>
+</html>
