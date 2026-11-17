@@ -74,9 +74,8 @@
         </div>
     </div>
 
-    <!-- HALAMAN GURU (TAMPILAN BARU SESUAI SCREENSHOT) -->
+    <!-- HALAMAN GURU - BERANDA -->
     <div id="guruPage" class="page">
-        <!-- HEADER HIJAU -->
         <div class="guru-header">
             <p class="greeting">Assalamu'alaikum</p>
             <h3 id="guruNameDisplay">A FAISAL ISMAIL</h3>
@@ -85,75 +84,49 @@
         <!-- TAB BERANDA -->
         <div id="tabBeranda" class="guru-tab active">
             <div class="container">
-                <!-- CARD SELAMAT DATANG -->
                 <div class="welcome-card">
                     <div class="welcome-text">
                         <h3>Selamat Datang</h3>
                         <p>Silahkan lakukan absensi berdasarkan waktu kehadiran Anda</p>
                     </div>
                     <div class="welcome-illustration">
-                        <svg width="120" height="100" viewBox="0 0 120 100">
-                            <!-- Kalender -->
-                            <rect x="10" y="10" width="70" height="80" rx="5" fill="#fff" stroke="#1b5e20" stroke-width="2"/>
-                            <rect x="10" y="10" width="70" height="20" rx="5" fill="#1b5e20"/>
-                            <circle cx="25" cy="15" r="3" fill="#fff"/>
-                            <circle cx="40" cy="15" r="3" fill="#fff"/>
-                            <circle cx="55" cy="15" r="3" fill="#fff"/>
-                            <circle cx="70" cy="15" r="3" fill="#fff"/>
-                            <!-- Grid kalender -->
-                            <rect x="15" y="35" width="12" height="10" fill="#4caf50" rx="2"/>
-                            <rect x="30" y="35" width="12" height="10" fill="#e0e0e0" rx="2"/>
-                            <rect x="45" y="35" width="12" height="10" fill="#4caf50" rx="2"/>
-                            <rect x="60" y="35" width="12" height="10" fill="#e0e0e0" rx="2"/>
-                            <rect x="15" y="50" width="12" height="10" fill="#e0e0e0" rx="2"/>
-                            <rect x="30" y="50" width="12" height="10" fill="#4caf50" rx="2"/>
-                            <rect x="45" y="50" width="12" height="10" fill="#e0e0e0" rx="2"/>
-                            <rect x="60" y="50" width="12" height="10" fill="#4caf50" rx="2"/>
-                            <rect x="15" y="65" width="12" height="10" fill="#4caf50" rx="2"/>
-                            <rect x="30" y="65" width="12" height="10" fill="#e0e0e0" rx="2"/>
-                            <rect x="45" y="65" width="12" height="10" fill="#4caf50" rx="2"/>
-                            <rect x="60" y="65" width="12" height="10" fill="#e0e0e0" rx="2"/>
-                            <!-- Jam -->
-                            <circle cx="95" cy="60" r="20" fill="#ff9800" stroke="#e65100" stroke-width="2"/>
-                            <circle cx="95" cy="60" r="15" fill="#fff"/>
-                            <line x1="95" y1="60" x2="95" y2="50" stroke="#333" stroke-width="2" stroke-linecap="round"/>
-                            <line x1="95" y1="60" x2="103" y2="60" stroke="#333" stroke-width="2" stroke-linecap="round"/>
-                            <circle cx="95" cy="60" r="2" fill="#333"/>
-                            <!-- Orang -->
-                            <circle cx="50" cy="75" r="5" fill="#4caf50"/>
-                            <rect x="47" y="80" width="6" height="15" fill="#4caf50" rx="2"/>
+                        <svg width="100" height="90" viewBox="0 0 100 90">
+                            <rect x="5" y="5" width="60" height="70" rx="4" fill="#fff" stroke="#fff" stroke-width="2"/>
+                            <rect x="5" y="5" width="60" height="15" rx="4" fill="#fff"/>
+                            <circle cx="15" cy="12" r="2" fill="#4caf50"/>
+                            <circle cx="25" cy="12" r="2" fill="#4caf50"/>
+                            <circle cx="35" cy="12" r="2" fill="#4caf50"/>
+                            <circle cx="45" cy="12" r="2" fill="#4caf50"/>
+                            <circle cx="55" cy="12" r="2" fill="#4caf50"/>
+                            <rect x="10" y="25" width="10" height="8" fill="#4caf50" rx="1"/>
+                            <rect x="25" y="25" width="10" height="8" fill="#e0e0e0" rx="1"/>
+                            <rect x="40" y="25" width="10" height="8" fill="#4caf50" rx="1"/>
+                            <rect x="10" y="38" width="10" height="8" fill="#e0e0e0" rx="1"/>
+                            <rect x="25" y="38" width="10" height="8" fill="#4caf50" rx="1"/>
+                            <rect x="40" y="38" width="10" height="8" fill="#e0e0e0" rx="1"/>
+                            <rect x="10" y="51" width="10" height="8" fill="#4caf50" rx="1"/>
+                            <rect x="25" y="51" width="10" height="8" fill="#4caf50" rx="1"/>
+                            <rect x="40" y="51" width="10" height="8" fill="#e0e0e0" rx="1"/>
+                            <circle cx="75" cy="55" r="18" fill="#ff9800" stroke="#e65100" stroke-width="2"/>
+                            <circle cx="75" cy="55" r="13" fill="#fff"/>
+                            <line x1="75" y1="55" x2="75" y2="47" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+                            <line x1="75" y1="55" x2="82" y2="55" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+                            <circle cx="75" cy="55" r="1.5" fill="#333"/>
                         </svg>
                     </div>
                 </div>
 
-                <!-- CARD JADWAL HARI INI -->
                 <div class="schedule-card">
                     <div class="schedule-header">
-                        <h3 id="todayDate">16 November 2026</h3>
+                        <h3 id="todayDate">17 November 2026</h3>
                         <p id="jadwalStatus" class="no-jadwal">Belum ada jadwal</p>
                     </div>
                     <div id="scheduleList" class="schedule-list"></div>
-                    <button id="btnMulaiAbsen" class="btn-absen" disabled>Mulai Absen</button>
+                    <button id="btnMulaiAbsen" class="btn-absen" disabled onclick="mulaiAbsen()">Mulai Absen</button>
                 </div>
 
-                <!-- RIWAYAT KEHADIRAN HARI INI -->
                 <h3 class="section-title">Riwayat Kehadiran Hari ini</h3>
-                <div id="riwayatHariIni" class="empty-state">
-                    <svg width="120" height="100" viewBox="0 0 120 100">
-                        <!-- Inbox -->
-                        <rect x="20" y="40" width="80" height="50" rx="5" fill="#e0e0e0"/>
-                        <rect x="30" y="30" width="60" height="20" rx="3" fill="#f5f5f5" stroke="#bdbdbd" stroke-width="1"/>
-                        <line x1="40" y1="50" x2="80" y2="50" stroke="#bdbdbd" stroke-width="2"/>
-                        <line x1="40" y1="60" x2="70" y2="60" stroke="#bdbdbd" stroke-width="2"/>
-                        <line x1="40" y1="70" x2="75" y2="70" stroke="#bdbdbd" stroke-width="2"/>
-                        <!-- Bubble chat -->
-                        <circle cx="90" cy="25" r="12" fill="#e0e0e0"/>
-                        <circle cx="85" cy="25" r="2" fill="#9e9e9e"/>
-                        <circle cx="90" cy="25" r="2" fill="#9e9e9e"/>
-                        <circle cx="95" cy="25" r="2" fill="#9e9e9e"/>
-                    </svg>
-                    <p>Tidak ada data</p>
-                </div>
+                <div id="riwayatHariIni"></div>
             </div>
         </div>
 
@@ -193,31 +166,55 @@
         </nav>
     </div>
 
-    <!-- MODAL ABSEN -->
-    <div id="absenModal" class="modal" style="display:none;">
-        <div class="modal-box">
-            <h3 id="modalTitle">📸 Absensi Mengajar</h3>
-            <div id="modalInfo" class="muted small"></div>
-
-            <div class="form-group">
-                <label>Foto Selfie</label>
-                <input type="file" id="fotoInput" accept="image/*" capture="user" onchange="previewFoto(event)">
+    <!-- HALAMAN KAMERA ABSEN (BARU) -->
+    <div id="kameraPage" class="page">
+        <header class="kamera-header">
+            <button onclick="kembaliKeBeranda()" class="btn-back">← Kembali</button>
+            <h3 id="kameraTitle">Mulai Absen</h3>
+        </header>
+        
+        <div class="kamera-container">
+            <!-- AREA KAMERA / PREVIEW FOTO -->
+            <div class="kamera-box" id="kameraBox" onclick="triggerKamera()">
                 <img id="fotoPreview" class="foto-preview" style="display:none;">
-            </div>
-            <div class="form-group">
-                <label>Keterangan</label>
-                <textarea id="ketInput" rows="3" placeholder="Contoh: Mengajar Bab 1, materi berjalan lancar..."></textarea>
-            </div>
-            <div class="form-group">
-                <label>Lokasi</label>
-                <div id="lokasiText" class="muted small">Mengambil lokasi...</div>
+                <div id="kameraPlaceholder" class="kamera-placeholder">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="#999">
+                        <path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z"/>
+                        <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
+                    </svg>
+                    <p>Ambil Gambar</p>
+                </div>
             </div>
 
-            <div id="modalError" class="error"></div>
-            <div class="modal-actions">
-                <button class="btn-outline" onclick="closeAbsenModal()">Batal</button>
-                <button class="btn-primary" id="btnSimpanAbsen" onclick="simpanAbsen()">💾 Simpan Absen</button>
+            <!-- INPUT FILE KAMERA (HIDDEN) -->
+            <input type="file" id="fotoInput" accept="image/*" capture="user" onchange="handleFotoTaken(event)" style="display:none;">
+
+            <!-- KETERANGAN -->
+            <div class="form-group-ket">
+                <label class="label-required">* Keterangan</label>
+                <textarea id="ketInput" rows="3" placeholder="Tulis keterangan absensi..."></textarea>
             </div>
+
+            <!-- LOKASI -->
+            <div class="lokasi-box" id="lokasiBox" style="display:none;">
+                <p class="lokasi-text" id="lokasiText">📍 Mengambil lokasi...</p>
+            </div>
+
+            <!-- SYARAT & KETENTUAN -->
+            <div class="syarat-box" id="syaratBox" style="display:none;">
+                <div class="syarat-header">
+                    <div class="syarat-icon">✓</div>
+                    <h4>Syarat & Ketentuan Absensi</h4>
+                </div>
+                <ul class="syarat-list">
+                    <li>Lakukan absensi di dalam kelas</li>
+                    <li>Menghadap kamera</li>
+                    <li>Wajah nampak jelas</li>
+                </ul>
+            </div>
+
+            <!-- TOMBOL KIRIM -->
+            <button id="btnKirim" class="btn-kirim" disabled onclick="kirimAbsensi()">Kirim</button>
         </div>
     </div>
 
