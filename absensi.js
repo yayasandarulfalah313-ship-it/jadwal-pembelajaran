@@ -15,6 +15,10 @@ const WAKTU_MAP = {
     '8': { mulai: '12:40', selesai: '13:20' }
 };
 
+let currentFoto = '';
+let currentLokasi = '';
+let selectedJadwal = null;
+
 // ============================================================
 // BACA DATA SIJAB
 // ============================================================
@@ -51,16 +55,6 @@ function getTodayDisplay() {
     return `${n.getDate()} ${b[n.getMonth()]} ${n.getFullYear()}`;
 }
 
-function getCurrentTime() {
-    const now = new Date();
-    return `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-}
-
-function timeToMinutes(timeStr) {
-    const [h, m] = timeStr.split(':').map(Number);
-    return h * 60 + m;
-}
-
 // ============================================================
 // SESI
 // ============================================================
@@ -93,6 +87,7 @@ function route() {
     document.getElementById('loginPage').style.display = s ? 'none' : 'flex';
     document.getElementById('adminPage').style.display = (s && s.role === 'admin') ? 'block' : 'none';
     document.getElementById('guruPage').style.display  = (s && s.role === 'guru')  ? 'block' : 'none';
+    document.getElementById('kameraPage').style.display = 'none';
     if (s && s.role === 'admin') loadAdminData();
     if (s && s.role === 'guru')  loadGuruData();
 }
@@ -203,7 +198,7 @@ function exportCSV2() {
 }
 
 // ============================================================
-// GURU - TAMPILAN BARU
+// GURU - BERANDA
 // ============================================================
 function showGuruTab(tabId, el) {
     document.querySelectorAll('.guru-tab').forEach(t => t.classList.remove('active'));
@@ -236,7 +231,6 @@ function loadGuruData() {
         status.className = 'no-jadwal';
         btn.disabled = true;
         btn.className = 'btn-absen';
-        btn.textContent = 'Mulai Absen';
     } else {
         const waktu = WAKTU_MAP[String(slots[0].jam)];
         const keluar = WAKTU_MAP[String(slots[slots.length-1].jam)];
@@ -313,11 +307,9 @@ function renderProfil() {
 }
 
 // ============================================================
-// MODAL ABSEN
+// KAMERA ABSEN - FUNGSI BARU
 // ============================================================
-let currentFoto = '';
-
-function openAbsenModal() {
+function mulaiAbsen() {
     const s = getSession();
     const slots = slotHariIni(s.nip);
     if (slots.length === 0) return alert('Tidak ada jadwal hari ini.');
@@ -325,92 +317,167 @@ function openAbsenModal() {
     const sudah = getAbsensi().find(r => r.nip === s.nip && r.tanggal === getTodayISO());
     if (sudah && sudah.waktuKeluar) return alert('Absensi hari ini sudah lengkap.');
 
-    document.getElementById('modalTitle').textContent = sudah ? '🕒 Absen Pulang' : '📸 Absensi Mengajar';
-    document.getElementById('modalInfo').textContent = `${getTodayName()} • ${slots.length} jam`;
-    document.getElementById('btnSimpanAbsen').textContent = sudah ? '💾 Simpan Pulang' : '💾 Simpan Absen';
-    document.getElementById('modalError').textContent = '';
-    document.getElementById('ketInput').value = sudah ? sudah.keterangan : '';
-    document.getElementById('fotoInput').style.display = sudah ? 'none' : 'block';
-    document.getElementById('fotoPreview').style.display = sudah ? 'block' : 'none';
-    if (sudah) document.getElementById('fotoPreview').src = sudah.foto;
+    // Simpan jadwal yang dipilih (ambil yang pertama jika belum ada)
+    selectedJadwal = slots[0];
+    
+    // Reset form
     currentFoto = '';
-    ambilLokasi();
-    document.getElementById('absenModal').style.display = 'flex';
+    currentLokasi = '';
+    document.getElementById('fotoPreview').style.display = 'none';
+    document.getElementById('kameraPlaceholder').style.display = 'block';
+    document.getElementById('ketInput').value = '';
+    document.getElementById('syaratBox').style.display = 'none';
+    document.getElementById('lokasiBox').style.display = 'none';
+    document.getElementById('btnKirim').disabled = true;
+    document.getElementById('btnKirim').className = 'btn-kirim';
+
+    // Update judul
+    document.getElementById('kameraTitle').textContent = sudah ? 'Absen Pulang' : 'Mulai Absen';
+
+    // Tampilkan halaman kamera
+    document.getElementById('guruPage').style.display = 'none';
+    document.getElementById('kameraPage').style.display = 'block';
+
+    // Auto-trigger kamera setelah 300ms
+    setTimeout(() => {
+        triggerKamera();
+    }, 300);
 }
 
-function closeAbsenModal() {
-    document.getElementById('absenModal').style.display = 'none';
+function triggerKamera() {
+    document.getElementById('fotoInput').click();
 }
 
-function previewFoto(e) {
-    const f = e.target.files[0];
-    if (!f) return;
+function handleFotoTaken(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
     const reader = new FileReader();
-    reader.onload = ev => {
-        currentFoto = ev.target.result;
-        const img = document.getElementById('fotoPreview');
-        img.src = currentFoto;
-        img.style.display = 'block';
+    reader.onload = function(e) {
+        currentFoto = e.target.result;
+        document.getElementById('fotoPreview').src = currentFoto;
+        document.getElementById('fotoPreview').style.display = 'block';
+        document.getElementById('kameraPlaceholder').style.display = 'none';
+
+        // Tampilkan syarat & ketentuan
+        document.getElementById('syaratBox').style.display = 'block';
+
+        // Ambil lokasi
+        ambilLokasi();
+
+        // Cek apakah bisa kirim
+        checkCanSubmit();
     };
-    reader.readAsDataURL(f);
+    reader.readAsDataURL(file);
 }
 
 function ambilLokasi() {
-    const box = document.getElementById('lokasiText');
-    if (!navigator.geolocation) { box.textContent = 'GPS tidak didukung'; return; }
+    const lokasiBox = document.getElementById('lokasiBox');
+    const lokasiText = document.getElementById('lokasiText');
+    
+    lokasiBox.style.display = 'block';
+    lokasiText.textContent = '📍 Mengambil lokasi...';
+
+    if (!navigator.geolocation) {
+        lokasiText.textContent = '📍 GPS tidak didukung';
+        currentLokasi = 'Lokasi tidak tersedia';
+        checkCanSubmit();
+        return;
+    }
+
     navigator.geolocation.getCurrentPosition(
-        pos => { box.textContent = `📍 ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`; },
-        () => { box.textContent = '📍 Lokasi tidak tersedia'; },
-        { timeout: 8000 }
+        pos => {
+            currentLokasi = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+            // Reverse geocoding sederhana (tampilkan koordinat)
+            lokasiText.textContent = `📍 ${currentLokasi}`;
+            checkCanSubmit();
+        },
+        err => {
+            lokasiText.textContent = '📍 Izin lokasi ditolak';
+            currentLokasi = 'Lokasi tidak tersedia';
+            checkCanSubmit();
+        },
+        { timeout: 10000, enableHighAccuracy: true }
     );
 }
 
-function simpanAbsen() {
-    const s = getSession();
-    const slots = slotHariIni(s.nip);
+function checkCanSubmit() {
     const ket = document.getElementById('ketInput').value.trim();
-    const lokasi = document.getElementById('lokasiText').textContent.replace('📍 ', '');
-    const now = new Date();
-    const waktu = `${getTodayISO()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-    const err = document.getElementById('modalError');
+    const btn = document.getElementById('btnKirim');
+    
+    if (currentFoto && ket) {
+        btn.disabled = false;
+        btn.className = 'btn-kirim enabled';
+    } else {
+        btn.disabled = true;
+        btn.className = 'btn-kirim';
+    }
+}
+
+// Monitor perubahan textarea
+document.addEventListener('DOMContentLoaded', function() {
+    const ketInput = document.getElementById('ketInput');
+    if (ketInput) {
+        ketInput.addEventListener('input', checkCanSubmit);
+    }
+});
+
+function kembaliKeBeranda() {
+    document.getElementById('kameraPage').style.display = 'none';
+    document.getElementById('guruPage').style.display = 'block';
+}
+
+async function kirimAbsensi() {
+    const s = getSession();
+    const ket = document.getElementById('ketInput').value.trim();
+    
+    if (!currentFoto) return alert('Foto wajib diambil!');
+    if (!ket) return alert('Keterangan wajib diisi!');
+    if (!selectedJadwal) return alert('Jadwal tidak ditemukan!');
 
     const rows = getAbsensi();
     const sudah = rows.find(r => r.nip === s.nip && r.tanggal === getTodayISO());
 
+    const now = new Date();
+    const waktu = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+
     if (sudah) {
+        // Absen pulang
         sudah.waktuKeluar = waktu;
+        sudah.keterangan = ket;
+        sudah.foto = currentFoto;
+        sudah.lokasi = currentLokasi;
         setAbsensi(rows);
-        closeAbsenModal();
-        loadGuruData();
         alert('✅ Absen pulang tersimpan!');
-        return;
+    } else {
+        // Absen masuk
+        const slots = slotHariIni(s.nip);
+        rows.push({
+            id: Date.now(),
+            nip: s.nip,
+            nama: s.nama,
+            tanggal: getTodayISO(),
+            hari: getTodayName(),
+            kelas: selectedJadwal.kelas,
+            jam: selectedJadwal.jam,
+            mapel: selectedJadwal.mapel,
+            jadwalMasuk: WAKTU_MAP[String(slots[0].jam)].mulai,
+            jadwalKeluar: WAKTU_MAP[String(slots[slots.length-1].jam)].selesai,
+            totalJam: slots.length,
+            waktuAbsensi: waktu,
+            waktuKeluar: null,
+            foto: currentFoto,
+            keterangan: ket,
+            lokasi: currentLokasi,
+            synced: false
+        });
+        setAbsensi(rows);
+        alert('✅ Absensi masuk tersimpan!');
     }
 
-    if (!currentFoto) { err.textContent = '⚠️ Wajib foto selfie!'; return; }
-    if (!ket) { err.textContent = '⚠️ Keterangan wajib diisi!'; return; }
-
-    rows.push({
-        id: Date.now(),
-        nip: s.nip,
-        nama: s.nama,
-        tanggal: getTodayISO(),
-        hari: getTodayName(),
-        kelas: [...new Set(slots.map(j => j.kelas))],
-        jamList: slots.map(j => j.jam),
-        jadwalMasuk: WAKTU_MAP[String(slots[0].jam)].mulai,
-        jadwalKeluar: WAKTU_MAP[String(slots[slots.length-1].jam)].selesai,
-        totalJam: slots.length,
-        waktuAbsensi: waktu,
-        waktuKeluar: null,
-        foto: currentFoto,
-        keterangan: ket,
-        lokasi,
-        synced: false
-    });
-    setAbsensi(rows);
-    closeAbsenModal();
+    // Kembali ke beranda
+    kembaliKeBeranda();
     loadGuruData();
-    alert('✅ Absensi tersimpan!');
 }
 
 // ============================================================
@@ -420,7 +487,4 @@ window.addEventListener('load', () => {
     const data = getSijabData();
     console.log('📊 Data SIJAB terbaca:', data.guru.length, 'guru,', data.jadwal.length, 'jadwal');
     route();
-});
-window.addEventListener('storage', () => {
-    if (getSession()?.role === 'guru') loadGuruData();
 });
